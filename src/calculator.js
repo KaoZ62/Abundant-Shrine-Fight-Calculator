@@ -44,7 +44,7 @@ function buildAttacker({
     level: attackerLevel,
     evs: evEnabled ? EVS_85 : EVS_0,
     ivs: IVS_31,
-    nature: "Serious",
+    nature: pokemonData?.[attackerName]?.nature || "Serious",
     boosts: boosts || {},
     ability: finalAbility,
     overrides: { baseStats }
