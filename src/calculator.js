@@ -4,6 +4,7 @@ import { abundantStats } from "./abundantStats.js"
 
 const gen = Generations.get(5)
 console.log("GEN USED:", gen.num)
+console.log("LIVE TEST 12345")
 
 const IVS_31 = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
 const EVS_0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }
