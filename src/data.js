@@ -3,6 +3,31 @@ import pokemonNames from "./abundant_shrine_pokemon_names.json"
 export const pokemonList = pokemonNames.pokemon
 
 export const pokemonData = {
+
+  Cobalion: {
+  ability: "Justified",
+  nature: "Adamant",
+  moves: ["Sacred Sword", "Iron Head", "Poison Jab"]
+},
+
+Virizion: {
+  ability: "Justified",
+  nature: "Adamant",
+  moves: ["Sacred Sword", "Leaf Blade", "Megahorn"]
+},
+
+Terrakion: {
+  ability: "Justified",
+  nature: "Adamant",
+  moves: ["Sacred Sword", "Stone Edge", "Aerial Ace"]
+},
+
+Keldeo: {
+  ability: "Justified",
+  nature: "Modest",
+  moves: ["Secret Sword", "Scald", "Hidden Power Ice"]
+},
+
   Aipom: {
     ability: "Skill Link",
     moves: ["Double Slap", "Gunk Shot", "Dynamic Punch", "Protect"]
@@ -81,10 +106,6 @@ export const pokemonData = {
   Cinccino: {
     ability: "Skill Link",
     moves: ["Tail Slap", "Bullet Seed", "Hidden Power (Dragon)", "After You"]
-  },
-
-  Cobalion: {
-    moves: ["Sacred Sword", "Iron Head", "Gunk Shot"]
   },
 
   Cottonee: {
@@ -208,10 +229,6 @@ export const pokemonData = {
   Jumpluff: {
     ability: "Chlorophyll",
     moves: ["Leaf Storm", "Acrobatics"]
-  },
-
-  Keldeo: {
-    moves: ["Secret Sword", "Scald", "Hidden Power Ice"]
   },
 
   Kingdra: {
@@ -469,10 +486,6 @@ export const pokemonData = {
     moves: ["Flare Blitz", "Head Smash", "Wild Charge", "Protect"]
   },
 
-  Terrakion: {
-    moves: ["Sacred Sword", "Stone Edge", "Aerial Ace"]
-  },
-
   Totodile: {
     ability: "Sheer Force",
     moves: ["Waterfall", "Ice Punch", "Crunch", "Protect"]
@@ -486,10 +499,6 @@ export const pokemonData = {
   Typhlosion: {
     ability: "Flash Fire",
     moves: ["Eruption", "Extrasensory", "Will-O-Wisp", "Provoke"]
-  },
-
-  Virizion: {
-    moves: ["Sacred Sword", "Leaf Blade", "Megahorn"]
   },
 
   Whismur: {

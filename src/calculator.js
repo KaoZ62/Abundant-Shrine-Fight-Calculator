@@ -4,16 +4,24 @@ import { abundantStats } from "./abundantStats.js"
 
 const gen = Generations.get(5)
 console.log("GEN USED:", gen.num)
-console.log("LIVE TEST 12345")
 
+// --- Constants ---
 const IVS_31 = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
 const EVS_0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }
 const EVS_85 = { hp: 85, atk: 85, def: 85, spa: 85, spd: 85, spe: 85 }
+
+// --- Utils ---
+function normKey(s) {
+  return String(s ?? "")
+    .replace(/\u00A0/g, " ") // NBSP -> normal space
+    .trim()
+}
 
 function clampInt(n) {
   return Math.max(0, Math.floor(n))
 }
 
+// Gen 5 rounding for 4096-based modifiers (ex: 3072 = 0.75)
 function applyModifierGen5(baseDamage, modifier4096) {
   const x = baseDamage * modifier4096
   const int = Math.floor(x / 4096)
@@ -21,6 +29,7 @@ function applyModifierGen5(baseDamage, modifier4096) {
   return frac <= 2048 ? int : int + 1
 }
 
+// --- Builders ---
 function buildAttacker({
   attackerName,
   attackerLevel,
@@ -28,23 +37,33 @@ function buildAttacker({
   boosts,
   abilityEnabled
 }) {
-  const baseStats = abundantStats[attackerName]
+  const name = normKey(attackerName)
+
+  const baseStats = abundantStats[name]
   if (!baseStats) {
-    throw new Error(`Base stats not found for attacker: "${attackerName}"`)
+    throw new Error(`Base stats not found for attacker: "${name}"`)
   }
 
-  const abilityFromData = pokemonData?.[attackerName]?.ability
+  const pdata = pokemonData?.[name]
+  const abilityFromData = pdata?.ability
+  const natureFromData = pdata?.nature
 
-  const finalAbility =
-    abilityEnabled && abilityFromData
-      ? abilityFromData
-      : undefined
+  // Ability is optional: if toggle ON but no ability in data => ignore (no crash)
+  const finalAbility = abilityEnabled && abilityFromData ? abilityFromData : undefined
 
-  return new Pokemon(gen, attackerName, {
+  // Nature: use data if present, else Serious
+  const finalNature = natureFromData || "Serious"
+  
+  console.log("[Attacker name]", JSON.stringify(name))
+console.log("[pokemonData key exists?]", Boolean(pokemonData?.[name]))
+console.log("[natureFromData]", pokemonData?.[name]?.nature)
+console.log("[finalNature]", finalNature)
+
+  return new Pokemon(gen, name, {
     level: attackerLevel,
     evs: evEnabled ? EVS_85 : EVS_0,
     ivs: IVS_31,
-    nature: pokemonData?.[attackerName]?.nature || "Serious",
+    nature: finalNature,
     boosts: boosts || {},
     ability: finalAbility,
     overrides: { baseStats }
@@ -52,12 +71,14 @@ function buildAttacker({
 }
 
 function buildDefender({ defenderName, defenderLevel }) {
-  const baseStats = abundantStats[defenderName]
+  const name = normKey(defenderName)
+
+  const baseStats = abundantStats[name]
   if (!baseStats) {
-    throw new Error(`Base stats not found for defender: "${defenderName}"`)
+    throw new Error(`Base stats not found for defender: "${name}"`)
   }
 
-  return new Pokemon(gen, defenderName, {
+  return new Pokemon(gen, name, {
     level: defenderLevel,
     evs: EVS_0,
     ivs: IVS_31,
@@ -66,6 +87,7 @@ function buildDefender({ defenderName, defenderLevel }) {
   })
 }
 
+// --- Public API ---
 export function getSpeedInfo({
   attackerName,
   defenderName,
@@ -112,12 +134,14 @@ export function calculateDamage({
   spreadHitsTwoTargets,
   abilityEnabled
 }) {
+  const atkName = normKey(attackerName)
+  const defName = normKey(defenderName)
+  const mvName = normKey(moveName)
 
-  /* ===== Validation Move ===== */
-
+  // --- Validate Move via engine ---
   let move
   try {
-    move = new Move(gen, moveName)
+    move = new Move(gen, mvName)
   } catch {
     return {
       error: true,
@@ -126,22 +150,19 @@ export function calculateDamage({
     }
   }
 
-  /* ===== Warning Ability non bloquant ===== */
-
+  // --- Non-blocking warning if ability toggle ON but no ability in data ---
   let warning = null
-
   if (abilityEnabled) {
-    const abilityFromData = pokemonData?.[attackerName]?.ability
+    const abilityFromData = pokemonData?.[atkName]?.ability
     if (!abilityFromData) {
-      warning = `No ability defined for ${attackerName}`
+      warning = `No ability defined for ${atkName}`
     }
   }
 
-  /* ===== Calcul ===== */
-
+  // --- Calculate ---
   try {
     const attacker = buildAttacker({
-      attackerName,
+      attackerName: atkName,
       attackerLevel,
       evEnabled,
       boosts,
@@ -149,7 +170,7 @@ export function calculateDamage({
     })
 
     const defender = buildDefender({
-      defenderName,
+      defenderName: defName,
       defenderLevel
     })
 
@@ -163,6 +184,7 @@ export function calculateDamage({
     let min = clampInt(rawMin * mult)
     let max = clampInt(rawMax * mult)
 
+    // Doubles spread (2 targets): apply 0.75 (3072/4096)
     if (spreadHitsTwoTargets) {
       min = applyModifierGen5(min, 3072)
       max = applyModifierGen5(max, 3072)
@@ -193,7 +215,6 @@ export function calculateDamage({
       koChanceText,
       warning
     }
-
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 
