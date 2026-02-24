@@ -1,5 +1,7 @@
 import { pokemonList, boostOptions, damageMultipliers, pokemonData } from "./data.js"
 import { calculateDamage, getSpeedInfo } from "./calculator.js"
+import { getFavorites, isFavorite, toggleFavorite } from "./favorites.js"
+import { createPicker } from "./picker.js"
 
 // --- Sprites (Option 1: PokemonDB) ---
 function toPokemonDbId(name) {
@@ -9,7 +11,6 @@ function toPokemonDbId(name) {
   return name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "")
-
 }
 
 function getSpriteUrl(name) {
@@ -68,9 +69,15 @@ export function renderUI() {
 
       <!-- Middle row: toggles / boosts -->
       <div style="margin-top:12px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;align-items:center;">
+
         <label>
           <input type="checkbox" id="evToggle" checked />
           Strength Charm
+        </label>
+
+        <label>
+          <input type="checkbox" id="abilityToggle" checked />
+          Ability active
         </label>
 
         <label>Boost Atk:</label>
@@ -133,14 +140,22 @@ export function renderUI() {
           <div style="opacity:0.8;font-size:12px;" id="pokeCount"></div>
         </div>
 
-        <div id="pokeGrid"
-          style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;"></div>
-      </div>
+       <div id="pokeFavorites"></div>
+
+<div id="pokeGrid"
+  style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;">
+</div>
     </div>
   `
 
   // --- UI state ---
   let pickingTarget = null // "attacker" | "defender"
+  const picker = createPicker({
+  getSpriteUrl,
+  setPickedPokemon,
+  closePicker,
+  getPickingTarget: () => pickingTarget
+})
 
   function refreshMoves() {
     const attackerName = document.getElementById("attacker").value
@@ -150,39 +165,37 @@ export function renderUI() {
     moveSelect.innerHTML = options(moves, moves.includes(current) ? current : (moves[0] ?? ""))
   }
 
- function refreshSpeed() {
-  const attackerName = document.getElementById("attacker").value
-  const defenderName = document.getElementById("defender").value
+  function refreshSpeed() {
+    const attackerName = document.getElementById("attacker").value
+    const defenderName = document.getElementById("defender").value
 
-  const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
-  const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
+    const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
+    const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
 
-  const evEnabled = document.getElementById("evToggle").checked
+    const evEnabled = document.getElementById("evToggle").checked
 
-  const { attackerSpe, defenderSpe } = getSpeedInfo({
-    attackerName,
-    defenderName,
-    attackerLevel,
-    defenderLevel,
-    evEnabled
-  })
+    const { attackerSpe, defenderSpe } = getSpeedInfo({
+      attackerName,
+      defenderName,
+      attackerLevel,
+      defenderLevel,
+      evEnabled
+    })
 
-  let text = "Speed tie"
-  let color = "#ccc"
+    let text = "Speed tie"
+    let color = "#ccc"
 
-  if (attackerSpe > defenderSpe) {
-    text = "Attacker faster"
-    color = "#4CAF50"
-  } else if (defenderSpe > attackerSpe) {
-    text = "Defender faster"
-    color = "#FF5252"
+    if (attackerSpe > defenderSpe) {
+      text = "Attacker faster"
+      color = "#4CAF50"
+    } else if (defenderSpe > attackerSpe) {
+      text = "Defender faster"
+      color = "#FF5252"
+    }
+
+    document.getElementById("speedInfo").innerHTML =
+      `<div><b>Speed:</b> <b style="color:${color};">${text}</b></div>`
   }
-
-  document.getElementById("speedInfo").innerHTML =
-    `<div><b>Speed:</b> <b style="color:${color};">${text}</b></div>`
-}
-
-   
 
   function runCalc() {
     const attackerName = document.getElementById("attacker").value
@@ -198,6 +211,8 @@ export function renderUI() {
     const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
 
     const evEnabled = document.getElementById("evToggle").checked
+    const abilityEnabled = document.getElementById("abilityToggle").checked
+
     const boostAtk = Number(document.getElementById("boostAtk").value)
     const boostSpa = Number(document.getElementById("boostSpa").value)
 
@@ -217,8 +232,20 @@ export function renderUI() {
       evEnabled,
       boosts,
       damageMultiplier,
-      spreadHitsTwoTargets
+      spreadHitsTwoTargets,
+      abilityEnabled
     })
+   if (result?.error) {
+  document.getElementById("result").innerHTML = `
+    <div style="color:#FF5252;font-weight:700;">
+      ⚠ Error with ${attackerName} using ${moveName}
+    </div>
+    <div style="margin-top:6px;font-size:12px;opacity:0.85;">
+      ${result.message}
+    </div>
+  `
+  return
+}
 
     const minPercent = Number(result.percentMin)
     const maxPercent = Number(result.percentMax)
@@ -228,11 +255,20 @@ export function renderUI() {
     else if (minPercent < 100 && maxPercent >= 100) color = "#FF9800" // orange
 
     document.getElementById("result").innerHTML = `
-      <h2 style="margin-bottom:10px;">Result</h2>
-      <p style="font-size:22px; color:${color};">
-        <b>${result.percentMin}% - ${result.percentMax}%</b>
-      </p>
-    `
+  <h2 style="margin-bottom:10px;">Result</h2>
+
+  ${
+    result.warning
+      ? `<div style="color:#FF9800;font-weight:600;margin-bottom:8px;">
+           ⚠ ${result.warning}
+         </div>`
+      : ""
+  }
+
+  <p style="font-size:22px; color:${color};">
+    <b>${result.percentMin}% - ${result.percentMax}%</b>
+  </p>
+`
   }
 
   function setPickedPokemon(targetId, name) {
@@ -258,7 +294,7 @@ export function renderUI() {
 
     document.getElementById("pokeModal").style.display = "flex"
     document.getElementById("pokeSearch").value = ""
-    renderGrid("")
+    picker.renderGrid("")
     document.getElementById("pokeSearch").focus()
   }
 
@@ -267,41 +303,29 @@ export function renderUI() {
     pickingTarget = null
   }
 
-  function renderGrid(query) {
-    const q = (query || "").trim().toLowerCase()
-    const filtered = q ? pokemonList.filter(n => n.toLowerCase().includes(q)) : pokemonList
 
-    document.getElementById("pokeCount").textContent = `${filtered.length} Pokémon`
+  // 🎯 EVENT DELEGATION (UN SEUL HANDLER)
+  const modalContainer = document.getElementById("pokeModal")
 
-    const grid = document.getElementById("pokeGrid")
-    grid.innerHTML = filtered
-      .map(name => `
-        <button type="button" data-name="${name}"
-          style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;border:1px solid #333;background:#0b0b0b;color:inherit;cursor:pointer;text-align:left;">
-          <img
-  src="${getSpriteUrl(name)}"
-  alt=""
-  style="
-    width:40px;
-    height:40px;
-    object-fit:contain;
-    image-rendering:pixelated;
-    flex:0 0 40px;
-  "
-/>
-          <span style="font-size:14px;">${name}</span>
-        </button>
-      `)
-      .join("")
+  modalContainer.onclick = (e) => {
+    const fav = e.target.closest(".fav-toggle")
+    if (fav) {
+      e.stopPropagation()
+      toggleFavorite(fav.dataset.fav)
+      picker.renderGrid(query)
+      return
+    }
 
-    grid.querySelectorAll("button[data-name]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (!pickingTarget) return
-        setPickedPokemon(pickingTarget, btn.dataset.name)
-        closePicker()
-      })
-    })
+    const btn = e.target.closest("button[data-name]")
+    if (btn) {
+      if (!pickingTarget) return
+      setPickedPokemon(pickingTarget, btn.dataset.name)
+      closePicker()
+    }
   }
+
+
+
 
   // --- Modal events ---
   document.getElementById("attackerBtn").addEventListener("click", () => openPicker("attacker"))
@@ -312,7 +336,7 @@ export function renderUI() {
     if (e.target && e.target.id === "pokeModal") closePicker()
   })
   document.getElementById("pokeSearch").addEventListener("input", (e) => {
-    renderGrid(e.target.value || "")
+    picker.renderGrid(e.target.value || "")
   })
 
   // --- Other events (auto-calc) ---
@@ -327,6 +351,11 @@ export function renderUI() {
 
   document.getElementById("evToggle").addEventListener("change", () => {
     refreshSpeed()
+    runCalc()
+  })
+
+  // ✅ Ability toggle doit aussi recalculer
+  document.getElementById("abilityToggle").addEventListener("change", () => {
     runCalc()
   })
 

@@ -12,6 +12,8 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
+    "@pkmn/data": "^0.10.6",
+    "@pkmn/dex": "^0.10.6",
     "@smogon/calc": "^0.10.0"
   }
 }
