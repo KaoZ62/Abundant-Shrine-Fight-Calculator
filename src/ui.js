@@ -308,21 +308,23 @@ export function renderUI() {
   const modalContainer = document.getElementById("pokeModal")
 
   modalContainer.onclick = (e) => {
-    const fav = e.target.closest(".fav-toggle")
-    if (fav) {
-      e.stopPropagation()
-      toggleFavorite(fav.dataset.fav)
-      picker.renderGrid(query)
-      return
-    }
+  const fav = e.target.closest(".fav-toggle")
+  if (fav) {
+    e.stopPropagation()
+    toggleFavorite(fav.dataset.fav)
 
-    const btn = e.target.closest("button[data-name]")
-    if (btn) {
-      if (!pickingTarget) return
-      setPickedPokemon(pickingTarget, btn.dataset.name)
-      closePicker()
-    }
+    const searchValue = document.getElementById("pokeSearch").value || ""
+    picker.renderGrid(searchValue)
+    return
   }
+
+  const btn = e.target.closest("button[data-name]")
+  if (btn) {
+    if (!pickingTarget) return
+    setPickedPokemon(pickingTarget, btn.dataset.name)
+    closePicker()
+  }
+}
 
 
 
