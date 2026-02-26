@@ -9,6 +9,7 @@ console.log("GEN USED:", gen.num)
 const IVS_31 = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
 const EVS_0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }
 const EVS_85 = { hp: 85, atk: 85, def: 85, spa: 85, spd: 85, spe: 85 }
+const IVS_0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }
 
 // --- Utils ---
 function normKey(s) {
@@ -53,7 +54,7 @@ function buildAttacker({
 
   // Nature: use data if present, else Serious
   const finalNature = natureFromData || "Serious"
-  
+
   console.log("[Attacker name]", JSON.stringify(name))
 console.log("[pokemonData key exists?]", Boolean(pokemonData?.[name]))
 console.log("[natureFromData]", pokemonData?.[name]?.nature)
@@ -81,7 +82,7 @@ function buildDefender({ defenderName, defenderLevel }) {
   return new Pokemon(gen, name, {
     level: defenderLevel,
     evs: EVS_0,
-    ivs: IVS_31,
+    ivs: IVS_0,
     nature: "Serious",
     overrides: { baseStats }
   })
@@ -206,15 +207,33 @@ export function calculateDamage({
     } catch {}
 
     return {
-      min,
-      max,
-      percentMin,
-      percentMax,
-      defenderHP: hp,
-      ohkoText,
-      koChanceText,
-      warning
+  min,
+  max,
+  percentMin,
+  percentMax,
+  defenderHP: hp,
+  ohkoText,
+  koChanceText,
+  warning,
+
+  // 🔍 DEBUG INFO
+  debug: {
+    attacker: {
+      name: attacker.name,
+      nature: attacker.nature,
+      ability: attacker.ability,
+      evs: attacker.evs,
+      stats: attacker.stats
+    },
+    defender: {
+      name: defender.name,
+      nature: defender.nature,
+      ability: defender.ability,
+      evs: defender.evs,
+      stats: defender.stats
     }
+  }
+}
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 

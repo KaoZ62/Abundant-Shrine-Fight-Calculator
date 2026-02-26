@@ -10,6 +10,33 @@ export const pokemonData = {
   moves: ["Sacred Sword", "Iron Head", "Poison Jab"]
 },
 
+  Growlithe: {
+    ability: "Intimidate",
+    "moves": [
+      "Flamethrower",
+      "Wild Charge",
+      "Close Combat",
+      "Helping Hand"]
+    },
+
+  Arcanine: {
+    ability: "Intimidate",
+    "moves": [
+      "Flamethrower",
+      "Wild Charge",
+      "Close Combat",
+      "Helping Hand"
+    ]
+  },
+  Spinda: {
+    ability: "Contrary",
+    moves: ["Super Power", "Mega Kick", "Mending Prayer", "Joyous Cheer"]
+  },
+  
+  Haxorus: {
+    "moves": ["Dragon Claw", "Brick Break", "Poison Jab", "Protect"]
+  },
+
 Virizion: {
   ability: "Justified",
   nature: "Adamant",
@@ -26,6 +53,20 @@ Keldeo: {
   ability: "Justified",
   nature: "Modest",
   moves: ["Secret Sword", "Scald", "Hidden Power Ice"]
+},
+
+Vulpix: {
+  ability: "Drought",
+  moves: ["Flamethrower", "Extrasensory","Hidden Power (Grass)", "Protective Aura"]
+},
+Floatzel: {
+  ability: "Water Veil",
+  moves: ["Hydro Pump", "Focus Blast","Ice Beam"]
+},
+
+Ninetales: {
+  ability: "Drought",
+  moves: ["Flamethrower", "Extrasensory","Solar Beam", "Protective Aura"]
 },
 
   Aipom: {
@@ -87,6 +128,10 @@ Keldeo: {
     ability: "Simple",
     moves: ["Overheat", "Earthquake", "Rock Slide"]
   },
+   Flygon: {
+    ability: "Levitate",
+    moves: ["Super Power", "Dig", "Dragon Rush"]
+  },
 
   Charizard: {
     ability: "Solar Power",
@@ -125,6 +170,11 @@ Keldeo: {
 
   Darumaka: {
     ability: "Hustle",
+    moves: ["Fire Punch", "Rock Slide"]
+  },
+  
+  Darmanitan: {
+    ability: "Sheer Force",
     moves: ["Fire Punch", "Rock Slide"]
   },
 
@@ -179,7 +229,7 @@ Keldeo: {
 
   Empoleon: {
     ability: "Competitive",
-    moves: ["Scald", "Hidden Power (Steel)", "Icy Wind", "Protective Aura"]
+    moves: ["Scald", "Flash Cannon", "Icy Wind", "Protective Aura"]
   },
 
   Espeon: {
@@ -414,7 +464,7 @@ Keldeo: {
 
   Serperior: {
     ability: "Contrary",
-    moves: ["Leaf Storm", "Twister", "Hidden Power (Rock)", "Gastro Acid"]
+    moves: ["Leaf Storm", "Dragon Pulse", "Hidden Power (Rock)", "Gastro Acid"]
   },
 
   Seviper: {
@@ -443,8 +493,8 @@ Keldeo: {
   },
 
   Slowking: {
-    ability: "Sheer Force",
-    moves: ["Hydro Pump", "Fire Blast", "Thunder"]
+    ability: "Regenerator",
+    moves: ["Hydro Pump", "Fire Blast", "Zap Cannon"]
   },
 
   Slowpoke: {
@@ -477,6 +527,10 @@ Keldeo: {
   },
 
   Swinub: {
+    ability: "Oblivious",
+    moves: ["Icicle Crash", "Earthquake", "Provoke", "Protective Aura"]
+  },
+  Mamoswine: {
     ability: "Oblivious",
     moves: ["Icicle Crash", "Earthquake", "Provoke", "Protective Aura"]
   },
