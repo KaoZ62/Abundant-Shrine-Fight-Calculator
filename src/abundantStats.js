@@ -69,6 +69,7 @@ export const abundantStats = {
   "Garchomp": { "hp": 108, "atk": 130, "def": 95, "spa": 80, "spd": 85, "spe": 102 },
   "Gible": { "hp": 58, "atk": 70, "def": 45, "spa": 40, "spd": 45, "spe": 42 },
   "Girafarig": { "hp": 70, "atk": 80, "def": 65, "spa": 90, "spd": 65, "spe": 85 },
+  "Glaceon": {"hp": 65, "atk": 60, "def": 110, "spa": 130, "spd": 95, "spe": 65 },
   "Glameow": { "hp": 49, "atk": 55, "def": 42, "spa": 42, "spd": 37, "spe": 85 },
   "Golduck": { "hp": 80, "atk": 82, "def": 78, "spa": 95, "spd": 80, "spe": 85 },
   "Granbull": { "hp": 90, "atk": 120, "def": 75, "spa": 60, "spd": 60, "spe": 45 },
