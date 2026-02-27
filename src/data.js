@@ -34,6 +34,7 @@ export const pokemonData = {
   },
   
   Haxorus: {
+    ability: "Mold Breaker",
     "moves": ["Dragon Claw", "Brick Break", "Poison Jab", "Protect"]
   },
 

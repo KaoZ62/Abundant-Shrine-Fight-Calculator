@@ -6,6 +6,8 @@ const gen = Generations.get(5)
 console.log("GEN USED:", gen.num)
 
 // --- Constants ---
+const NEUTRAL_ABILITY_OFF = "Illuminate" // Ability neutre utilisée quand Ability OFF
+
 const IVS_31 = { hp: 31, atk: 31, def: 31, spa: 31, spd: 31, spe: 31 }
 const EVS_0 = { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 }
 const EVS_85 = { hp: 85, atk: 85, def: 85, spa: 85, spd: 85, spe: 85 }
@@ -48,17 +50,22 @@ function buildAttacker({
   const pdata = pokemonData?.[name]
   const abilityFromData = pdata?.ability
   const natureFromData = pdata?.nature
-
-  // Ability is optional: if toggle ON but no ability in data => ignore (no crash)
-  const finalAbility = abilityEnabled && abilityFromData ? abilityFromData : undefined
-
-  // Nature: use data if present, else Serious
   const finalNature = natureFromData || "Serious"
 
+  // ✅ Final ability rules:
+  // - Toggle ON: use pokemonData ability if present (no crash if missing)
+  // - Toggle OFF: force a neutral ability so default abilities like Rivalry never affect damage
+  const finalAbility = abilityEnabled
+    ? (abilityFromData || undefined)
+    : NEUTRAL_ABILITY_OFF
+
   console.log("[Attacker name]", JSON.stringify(name))
-console.log("[pokemonData key exists?]", Boolean(pokemonData?.[name]))
-console.log("[natureFromData]", pokemonData?.[name]?.nature)
-console.log("[finalNature]", finalNature)
+  console.log("[pokemonData key exists?]", Boolean(pokemonData?.[name]))
+  console.log("[natureFromData]", natureFromData)
+  console.log("[finalNature]", finalNature)
+  console.log("[abilityEnabled]", abilityEnabled)
+  console.log("[abilityFromData]", abilityFromData)
+  console.log("[finalAbility]", finalAbility)
 
   return new Pokemon(gen, name, {
     level: attackerLevel,
@@ -207,33 +214,33 @@ export function calculateDamage({
     } catch {}
 
     return {
-  min,
-  max,
-  percentMin,
-  percentMax,
-  defenderHP: hp,
-  ohkoText,
-  koChanceText,
-  warning,
+      min,
+      max,
+      percentMin,
+      percentMax,
+      defenderHP: hp,
+      ohkoText,
+      koChanceText,
+      warning,
 
-  // 🔍 DEBUG INFO
-  debug: {
-    attacker: {
-      name: attacker.name,
-      nature: attacker.nature,
-      ability: attacker.ability,
-      evs: attacker.evs,
-      stats: attacker.stats
-    },
-    defender: {
-      name: defender.name,
-      nature: defender.nature,
-      ability: defender.ability,
-      evs: defender.evs,
-      stats: defender.stats
+      // 🔍 DEBUG INFO
+      debug: {
+        attacker: {
+          name: attacker.name,
+          nature: attacker.nature,
+          ability: attacker.ability,
+          evs: attacker.evs,
+          stats: attacker.stats
+        },
+        defender: {
+          name: defender.name,
+          nature: defender.nature,
+          ability: defender.ability,
+          evs: defender.evs,
+          stats: defender.stats
+        }
+      }
     }
-  }
-}
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
 

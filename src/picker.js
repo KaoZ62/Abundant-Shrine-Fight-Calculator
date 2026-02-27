@@ -1,5 +1,29 @@
 import { pokemonList } from "./data.js"
 import { getFavorites, isFavorite, toggleFavorite } from "./favorites.js"
+import { Generations, Pokemon } from "@smogon/calc"
+
+const gen = Generations.get(5)
+
+function getPokemonTypes(name) {
+  try {
+    const p = new Pokemon(gen, name, { level: 50 })
+    return p.types || []
+  } catch {
+    return []
+  }
+}
+console.log(gen)
+// 🔥 Récupérer tous les types uniques présents dans la liste
+function getAllTypes() {
+  const typeSet = new Set()
+
+  pokemonList.forEach(name => {
+    const types = getPokemonTypes(name)
+    types.forEach(t => typeSet.add(t))
+  })
+
+  return Array.from(typeSet).sort()
+}
 
 export function createPicker({
   getSpriteUrl,
@@ -8,13 +32,50 @@ export function createPicker({
   getPickingTarget
 }) {
 
+  function ensureTypeFilterExists() {
+    if (document.getElementById("typeFilter")) return
+
+    const types = getAllTypes()
+
+    const select = document.createElement("select")
+    select.id = "typeFilter"
+    select.style.marginBottom = "12px"
+    select.style.padding = "6px"
+    select.style.borderRadius = "8px"
+    select.style.background = "#111"
+    select.style.color = "white"
+    select.style.border = "1px solid #333"
+
+    select.innerHTML = `
+      <option value="">All Types</option>
+      ${types.map(t => `<option value="${t}">${t}</option>`).join("")}
+    `
+
+    const count = document.getElementById("pokeCount")
+    count.parentNode.insertBefore(select, count)
+
+    select.addEventListener("change", () => {
+      renderGrid(document.getElementById("pokeSearch")?.value || "")
+    })
+  }
+
   function renderGrid(query) {
+    ensureTypeFilterExists()
+
     const q = (query || "").trim().toLowerCase()
+    const selectedType = document.getElementById("typeFilter")?.value || ""
     const favorites = getFavorites()
 
-    const baseList = q
+    let baseList = q
       ? pokemonList.filter(n => n.toLowerCase().includes(q))
       : pokemonList
+
+    // 🔥 TYPE FILTER
+    if (selectedType) {
+      baseList = baseList.filter(name =>
+        getPokemonTypes(name).includes(selectedType)
+      )
+    }
 
     const filtered = q
       ? baseList
