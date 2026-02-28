@@ -1,19 +1,25 @@
-const STORAGE_KEY = "abundant_favorite_attackers"
+/**
+ * Retourne la bonne clé selon le contexte.
+ */
+function getStorageKey(target) {
+  if (target === "defender") {
+    return "abundant_favorite_defenders"
+  }
+  return "abundant_favorite_attackers"
+}
 
 /**
  * Récupère les favoris depuis le storage.
- * Sécurise contre données corrompues.
  */
-export function getFavorites() {
+export function getFavorites(target = "attacker") {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const key = getStorageKey(target)
+    const raw = localStorage.getItem(key)
     if (!raw) return []
 
     const parsed = JSON.parse(raw)
-
     if (!Array.isArray(parsed)) return []
 
-    // Supprime doublons éventuels
     return [...new Set(parsed)]
   } catch {
     return []
@@ -23,47 +29,48 @@ export function getFavorites() {
 /**
  * Sauvegarde proprement une liste.
  */
-function saveFavorites(list) {
+function saveFavorites(list, target) {
+  const key = getStorageKey(target)
   const clean = [...new Set(list)]
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(clean))
+  localStorage.setItem(key, JSON.stringify(clean))
 }
 
 /**
  * Vérifie si un Pokémon est favori.
  */
-export function isFavorite(name) {
-  return getFavorites().includes(name)
+export function isFavorite(name, target = "attacker") {
+  return getFavorites(target).includes(name)
 }
 
 /**
- * Ajoute un favori (si pas déjà présent).
+ * Ajoute un favori.
  */
-export function addFavorite(name) {
-  const favs = getFavorites()
+export function addFavorite(name, target = "attacker") {
+  const favs = getFavorites(target)
   if (favs.includes(name)) return false
 
   favs.push(name)
-  saveFavorites(favs)
+  saveFavorites(favs, target)
   return true
 }
 
 /**
  * Retire un favori.
  */
-export function removeFavorite(name) {
-  const favs = getFavorites()
+export function removeFavorite(name, target = "attacker") {
+  const favs = getFavorites(target)
   if (!favs.includes(name)) return false
 
   const updated = favs.filter(p => p !== name)
-  saveFavorites(updated)
+  saveFavorites(updated, target)
   return true
 }
 
 /**
- * Toggle favori (ajout / retrait).
+ * Toggle favori.
  */
-export function toggleFavorite(name) {
-  return isFavorite(name)
-    ? removeFavorite(name)
-    : addFavorite(name)
+export function toggleFavorite(name, target = "attacker") {
+  return isFavorite(name, target)
+    ? removeFavorite(name, target)
+    : addFavorite(name, target)
 }
