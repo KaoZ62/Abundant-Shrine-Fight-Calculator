@@ -357,7 +357,7 @@ export function renderUI() {
       spreadHitsTwoTargets,
       abilityEnabled
     })
-
+console.log("DEBUG STATS:", result.debug)
     if (result?.error) {
       document.getElementById("result").innerHTML = `
         <div style="color:#FF5252;font-weight:700;">

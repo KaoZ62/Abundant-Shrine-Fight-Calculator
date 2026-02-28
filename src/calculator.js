@@ -3,7 +3,7 @@ import { pokemonData } from "./data.js"
 import { abundantStats } from "./abundantStats.js"
 
 const gen = Generations.get(5)
-console.log("GEN USED:", gen.num)
+
 
 // --- Constants ---
 const NEUTRAL_ABILITY_OFF = "Illuminate" // Ability neutre utilisée quand Ability OFF
@@ -59,13 +59,6 @@ function buildAttacker({
     ? (abilityFromData || undefined)
     : NEUTRAL_ABILITY_OFF
 
-  console.log("[Attacker name]", JSON.stringify(name))
-  console.log("[pokemonData key exists?]", Boolean(pokemonData?.[name]))
-  console.log("[natureFromData]", natureFromData)
-  console.log("[finalNature]", finalNature)
-  console.log("[abilityEnabled]", abilityEnabled)
-  console.log("[abilityFromData]", abilityFromData)
-  console.log("[finalAbility]", finalAbility)
 
   return new Pokemon(gen, name, {
     level: attackerLevel,
