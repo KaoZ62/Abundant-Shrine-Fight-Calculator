@@ -13,7 +13,7 @@ function getPokemonTypes(name) {
   }
 }
 
-const TYPE_COLORS = {
+export const TYPE_COLORS = {
   Normal: "#A8A77A",
   Fire: "#EE8130",
   Water: "#6390F0",
@@ -33,7 +33,7 @@ const TYPE_COLORS = {
   Steel: "#B7B7CE"
 }
 
-function darkenColor(hex, amount = 0.25) {
+export function darkenColor(hex, amount = 0.25) {
   const num = parseInt(hex.replace("#", ""), 16)
   let r = (num >> 16) & 255
   let g = (num >> 8) & 255

@@ -2,6 +2,7 @@ import pokemonNames from "./abundant_shrine_pokemon_names.json"
 
 export const pokemonList = pokemonNames.pokemon
 
+
 export const pokemonData = {
 
   Cobalion: {
