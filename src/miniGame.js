@@ -110,6 +110,7 @@ export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteU
   // ✅ multi-items team-wide
   let teamItems = []
   const roster = []
+  let activePokemon = []
   const validatedTeam = []
   // ✅ items dispo pour l'équipe (tu peux en ajouter/enlever si tu veux)
 const ALL_TEAM_ITEMS = [
@@ -434,18 +435,22 @@ try {
 }
 
   // ================= VALIDATED TEAM RENDER =================
-  function renderRoster() {
+function renderRoster() {
   if (!rosterContainer) return
 
   rosterContainer.innerHTML = roster.map((p, index) => `
-    <div style="
-      border:1px solid #444;
-      border-radius:12px;
-      padding:10px;
-      background:#1a1a1a;
-      width:220px;
-      flex:0 0 auto;
-    ">
+    <div class="miniRosterMember"
+      data-name="${p.name}"
+      style="
+        border:2px solid ${activePokemon === p.name ? "#2e7d32" : "#444"};
+        border-radius:12px;
+        padding:10px;
+        background:${activePokemon === p.name ? "#1f2e1f" : "#1a1a1a"};
+        width:220px;
+        flex:0 0 auto;
+        cursor:pointer;
+      ">
+
       <div style="display:flex;align-items:center;gap:8px;">
         <img src="${getSpriteUrl(p.name)}"
              style="width:48px;height:48px;image-rendering:pixelated;" />
@@ -468,36 +473,45 @@ try {
       </div>
 
       <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
-  ${(p.moves ?? []).map(m => `
-    <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
-      <input type="checkbox"
-        class="rosterMoveCheckbox"
-        data-index="${index}"
-        data-move="${m}"
-        ${(p.priorityMoves ?? []).includes(m) ? "checked" : ""}/>
-      ${m}
-    </label>
-  `).join("")}
-</div>
+        ${(p.moves ?? []).map(m => `
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;">
+            <input type="checkbox"
+              class="rosterMoveCheckbox"
+              data-index="${index}"
+              data-move="${m}"
+              ${(p.priorityMoves ?? []).includes(m) ? "checked" : ""}/>
+            ${m}
+          </label>
+        `).join("")}
+      </div>
 
       <button class="validatePokemonBtn" data-index="${index}"
         style="margin-top:10px;width:100%;padding:7px 10px;border-radius:8px;border:none;background:#1976d2;color:white;font-weight:700;cursor:pointer;">
         Validate
       </button>
+
     </div>
   `).join("")
 
-  // remove from roster
+
+  // ================= REMOVE =================
   rosterContainer.querySelectorAll(".removeRosterBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation()
       const i = Number(btn.dataset.index)
+      const removed = roster[i]
+
+      if (removed && activePokemon === removed.name) {
+        activePokemon = null
+      }
+
       roster.splice(i, 1)
       renderRoster()
       renderMiniGame()
     })
   })
 
-  // strength charm
+  // ================= STRENGTH CHARM =================
   rosterContainer.querySelectorAll(".rosterCharmToggle").forEach(cb => {
     cb.addEventListener("change", () => {
       const i = Number(cb.dataset.index)
@@ -506,7 +520,7 @@ try {
     })
   })
 
-  // moves
+  // ================= MOVES =================
   rosterContainer.querySelectorAll(".rosterMoveCheckbox").forEach(cb => {
     cb.addEventListener("change", () => {
       const i = Number(cb.dataset.index)
@@ -515,18 +529,23 @@ try {
       roster[i].priorityMoves ??= []
 
       if (cb.checked) {
-        if (!roster[i].priorityMoves.includes(move)) roster[i].priorityMoves.push(move)
+        if (!roster[i].priorityMoves.includes(move)) {
+          roster[i].priorityMoves.push(move)
+        }
       } else {
-        roster[i].priorityMoves = roster[i].priorityMoves.filter(m => m !== move)
+        roster[i].priorityMoves =
+          roster[i].priorityMoves.filter(m => m !== move)
       }
 
       renderMiniGame()
     })
   })
 
-  // validate -> move to validatedTeam
+  // ================= VALIDATE =================
   rosterContainer.querySelectorAll(".validatePokemonBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation()
+
       const i = Number(btn.dataset.index)
       const member = roster[i]
       if (!member) return
@@ -534,44 +553,44 @@ try {
       validatedTeam.push(member)
       roster.splice(i, 1)
 
+      if (activePokemon === member.name) {
+        activePokemon = null
+      }
+
       renderRoster()
       renderValidatedTeam()
       renderMiniGame()
     })
   })
 }
-
 function renderValidatedTeam() {
   if (!validatedTeamContainer) return
 
   validatedTeamContainer.innerHTML = validatedTeam.map((p, index) => `
-    <div style="
-      border:1px solid #444;
-      border-radius:12px;
-      padding:8px;
-      background:#1a1a1a;
-      width:140px;
-      flex:0 0 auto;
-      text-align:center;
-      position:relative;
-    ">
+    <div class="miniValidatedMember"
+      data-name="${p.name}"
+      style="
+        border:2px solid ${activePokemon.includes(p.name) ? "#2e7d32" : "#444"};
+        border-radius:12px;
+        padding:8px;
+        background:${activePokemon.includes(p.name) ? "#1f2e1f" : "#1a1a1a"};
+        width:140px;
+        flex:0 0 auto;
+        text-align:center;
+        position:relative;
+        cursor:pointer;
+      ">
+
       <button data-index="${index}" class="removeValidatedBtn"
         style="position:absolute;top:6px;right:6px;background:#c62828;border:none;color:white;padding:2px 6px;border-radius:6px;cursor:pointer;">
         ✕
       </button>
-<button data-index="${index}" class="editValidatedBtn"
-  style="
-    position:absolute;
-    top:6px;
-    left:6px;
-    background:#1976d2;
-    border:none;
-    color:white;
-    padding:2px 6px;
-    border-radius:6px;
-    cursor:pointer;">
-  ✎
-</button>
+
+      <button data-index="${index}" class="editValidatedBtn"
+        style="position:absolute;top:6px;left:6px;background:#1976d2;border:none;color:white;padding:2px 6px;border-radius:6px;cursor:pointer;">
+        ✎
+      </button>
+
       <img src="${getSpriteUrl(p.name)}"
            style="width:56px;height:56px;image-rendering:pixelated;" />
 
@@ -589,20 +608,61 @@ function renderValidatedTeam() {
     </div>
   `).join("")
 
-  validatedTeamContainer.querySelectorAll(".editValidatedBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const i = Number(btn.dataset.index)
-    const member = validatedTeam[i]
-    if (!member) return
+  // ✅ CLICK -> set activePokemon (mais pas si click sur bouton)
+  validatedTeamContainer.querySelectorAll(".miniValidatedMember").forEach(el => {
+  el.addEventListener("click", (e) => {
 
-    roster.push(member)
-    validatedTeam.splice(i, 1)
+    if (e.target.closest("button")) return
 
-    renderRoster()
+    const name = el.dataset.name
+
+    if (activePokemon.includes(name)) {
+      // deselect
+      activePokemon = activePokemon.filter(n => n !== name)
+    } else {
+      // select
+      activePokemon.push(name)
+    }
+
     renderValidatedTeam()
     renderMiniGame()
   })
 })
+
+  // remove validated
+  validatedTeamContainer.querySelectorAll(".removeValidatedBtn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation()
+      const i = Number(btn.dataset.index)
+      const removed = validatedTeam[i]
+      if (!removed) return
+
+      if (activePokemon === removed.name) activePokemon = null
+
+      validatedTeam.splice(i, 1)
+      renderValidatedTeam()
+      renderMiniGame()
+    })
+  })
+
+  // edit validated -> back to roster
+  validatedTeamContainer.querySelectorAll(".editValidatedBtn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation()
+      const i = Number(btn.dataset.index)
+      const member = validatedTeam[i]
+      if (!member) return
+
+      if (activePokemon === member.name) activePokemon = null
+
+      roster.push(member)
+      validatedTeam.splice(i, 1)
+
+      renderRoster()
+      renderValidatedTeam()
+      renderMiniGame()
+    })
+  })
 }
   // ================= OHKO =================
   function computeWaveOHKO(defenderName, level) {
@@ -638,7 +698,11 @@ function renderValidatedTeam() {
     return Number(String(x).replace("%", "").trim())
   }
 
-  for (const member of validatedTeam) {
+ const teamToUse = activePokemon.length > 0
+  ? validatedTeam.filter(p => activePokemon.includes(p.name))
+  : validatedTeam
+
+for (const member of teamToUse) {
     for (const moveName of member.priorityMoves || []) {
 
       let moveObj
