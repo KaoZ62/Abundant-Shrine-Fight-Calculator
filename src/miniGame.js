@@ -379,56 +379,62 @@ phaseSelect.innerHTML = uniquePhases
   }
 
   // ================= ITEM MULTIPLIER (CUMUL) =================
- function getItemMultiplier(teamItemsList, move, defenderName) {
+  function getItemMultiplier(item, moveName, defenderName) {
+  if (!item) return 1.0
+
   let multiplier = 1.0
+  let move
 
-  let defender
-
-try {
-  defender = new Pokemon(gen, defenderName)
-} catch {
-  return 1.0
-}
-
-  for (const item of teamItemsList) {
-    if (item === "Life Orb") multiplier *= 1.3
-
-    if (item === "Choice Band" && move.category === "Physical")
-      multiplier *= 1.5
-
-    if (item === "Choice Specs" && move.category === "Special")
-      multiplier *= 1.5
-
-    if (item === "Muscle Band" && move.category === "Physical")
-      multiplier *= 1.1
-
-    if (item === "Wise Glasses" && move.category === "Special")
-      multiplier *= 1.1
-
-    if (item === "Expert Belt") {
-      try {
-        const typeData = gen.types.get(move.type)
-        const effectiveness = typeData.effectiveness(defender.types)
-        if (effectiveness > 1) multiplier *= 1.2
-      } catch {}
-    }
-
-   if (TYPE_BOOST_ITEMS[item]) {
-  const expectedType = TYPE_BOOST_ITEMS[item]
-
-  // move.type peut être une string ou un objet selon @smogon/calc
-  const actualType =
-    typeof move.type === "string"
-      ? move.type
-      : move.type?.name
-
-  if (
-    actualType &&
-    actualType.toLowerCase() === expectedType.toLowerCase()
-  ) {
-    multiplier *= 1.2
+  try {
+    move = new Move(gen, moveName)
+  } catch {
+    return 1.0
   }
-}
+
+  const TYPE_BOOST_ITEMS = {
+    "Flame Plate": "Fire",
+    "Splash Plate": "Water",
+    "Zap Plate": "Electric",
+    "Meadow Plate": "Grass",
+    "Icicle Plate": "Ice",
+    "Fist Plate": "Fighting",
+    "Toxic Plate": "Poison",
+    "Earth Plate": "Ground",
+    "Sky Plate": "Flying",
+    "Mind Plate": "Psychic",
+    "Insect Plate": "Bug",
+    "Stone Plate": "Rock",
+    "Spooky Plate": "Ghost",
+    "Draco Plate": "Dragon",
+    "Dread Plate": "Dark",
+    "Iron Plate": "Steel"
+  }
+
+  if (item === "Life Orb") multiplier *= 1.3
+  if (item === "Choice Band" && move.category === "Physical") multiplier *= 1.5
+  if (item === "Choice Specs" && move.category === "Special") multiplier *= 1.5
+  if (item === "Muscle Band" && move.category === "Physical") multiplier *= 1.1
+  if (item === "Wise Glasses" && move.category === "Special") multiplier *= 1.1
+
+  if (item === "Expert Belt") {
+    try {
+      const defender = new Pokemon(gen, defenderName)
+      const typeData = gen.types.get(move.type)
+      const effectiveness = typeData.effectiveness(defender.types)
+      if (effectiveness > 1) multiplier *= 1.2
+    } catch {}
+  }
+
+  if (TYPE_BOOST_ITEMS[item]) {
+    const expectedType = TYPE_BOOST_ITEMS[item]
+    const actualType =
+      typeof move.type === "string"
+        ? move.type
+        : move.type?.name
+
+    if (actualType === expectedType) {
+      multiplier *= 1.2
+    }
   }
 
   return multiplier
@@ -704,6 +710,13 @@ function renderValidatedTeam() {
 
 for (const member of teamToUse) {
     for (const moveName of member.priorityMoves || []) {
+        let normalizedMoveName = moveName
+
+if (moveName.startsWith("Hidden Power (") && moveName.endsWith(")")) {
+  normalizedMoveName = moveName
+    .replace("Hidden Power (", "Hidden Power ")
+    .replace(")", "")
+}
 
       let moveObj
       try {
@@ -750,7 +763,9 @@ for (const member of teamToUse) {
           }
         }
       }
-
+if (moveName.toLowerCase().includes("hidden")) {
+  console.log("MiniGame moveName =", moveName)
+}
       // 1️⃣ Test sans item
       const base = calculateDamage({
         attackerName: member.name,
@@ -764,6 +779,14 @@ for (const member of teamToUse) {
         spreadHitsTwoTargets: false,
         abilityEnabled: false
       })
+      console.log("MINIGAME RESULT", {
+  attacker: member.name,
+  defender: defenderName,
+  level: level,
+  min: base.percentMin,
+  max: base.percentMax,
+  hp: base.defenderHP
+})
 
       if (!base?.error) {
         evaluate(toNum(base.percentMin), toNum(base.percentMax), null)
@@ -771,7 +794,7 @@ for (const member of teamToUse) {
 
       // 2️⃣ Test items
       for (const item of sortedItems) {
-        const multiplier = getItemMultiplier([item], moveObj, defenderName)
+        const multiplier = getItemMultiplier(item, moveName, defenderName)
 
         const res = calculateDamage({
           attackerName: member.name,

@@ -139,17 +139,17 @@ export function calculateDamage({
   const defName = normKey(defenderName)
   const mvName = normKey(moveName)
 
-  // --- Validate Move via engine ---
-  let move
-  try {
-    move = new Move(gen, mvName)
-  } catch {
-    return {
-      error: true,
-      errorType: "move",
-      message: "Move Not Defined"
-    }
+   // --- Validate Move via engine ---
+ let move
+try {
+  move = new Move(gen, mvName)
+} catch {
+  return {
+    error: true,
+    errorType: "move",
+    message: "Move Not Defined"
   }
+}
 
   // --- Non-blocking warning if ability toggle ON but no ability in data ---
   let warning = null
@@ -175,10 +175,20 @@ export function calculateDamage({
       defenderLevel
     })
 
-    const result = calculate(gen, attacker, defender, move)
+   const result = calculate(gen, attacker, defender, move)
 
-    const [rawMin, rawMax] = result.range()
-    const hp = defender.stats.hp
+
+
+let [rawMin, rawMax] = result.range()
+const hp = defender.stats.hp
+
+// ✅ Mini-game rule: force Hidden Power to behave like 60 BP instead of 70 BP (Gen 5 calc uses 70 with 31 IVs)
+// We rescale final damage by 60/70. This is an approximation (rounding differences may exist).
+if (mvName.toLowerCase().startsWith("hidden power")) {
+  const scale = 60 / 70
+  rawMin = Math.floor(rawMin * scale)
+  rawMax = Math.floor(rawMax * scale)
+}
 
     const mult = Number(damageMultiplier || 1.0)
 

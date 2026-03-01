@@ -625,7 +625,14 @@ if (selectedItem) {
       spreadHitsTwoTargets,
       abilityEnabled
     })
-
+console.log("UI RESULT", {
+  attacker: attackerName,
+  defender: defenderName,
+  level: defenderLevel,
+  min: result.percentMin,
+  max: result.percentMax,
+  hp: result.defenderHP
+})
     if (result?.error) {
       document.getElementById("result").innerHTML = `
         <div style="color:#FF5252;font-weight:700;">
