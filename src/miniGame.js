@@ -442,10 +442,10 @@ function renderRoster() {
     <div class="miniRosterMember"
       data-name="${p.name}"
       style="
-        border:2px solid ${activePokemon === p.name ? "#2e7d32" : "#444"};
+        border:2px solid #444;
         border-radius:12px;
         padding:10px;
-        background:${activePokemon === p.name ? "#1f2e1f" : "#1a1a1a"};
+     background:#1a1a1a;
         width:220px;
         flex:0 0 auto;
         cursor:pointer;
@@ -637,7 +637,7 @@ function renderValidatedTeam() {
       const removed = validatedTeam[i]
       if (!removed) return
 
-      if (activePokemon === removed.name) activePokemon = null
+      activePokemon = activePokemon.filter(n => n !== removed.name)
 
       validatedTeam.splice(i, 1)
       renderValidatedTeam()
@@ -653,7 +653,7 @@ function renderValidatedTeam() {
       const member = validatedTeam[i]
       if (!member) return
 
-      if (activePokemon === member.name) activePokemon = null
+      activePokemon = activePokemon.filter(n => n !== member.name)
 
       roster.push(member)
       validatedTeam.splice(i, 1)
