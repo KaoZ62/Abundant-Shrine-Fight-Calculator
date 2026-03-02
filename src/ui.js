@@ -125,7 +125,7 @@ const CALC_ITEMS = [
   "Life Orb","Choice Band","Choice Specs"
 ]
 
-let selectedItem = null
+let selectedItems = []
   let miniGameApi = null
   const defaultAttacker = pokemonList[0]
 
@@ -769,27 +769,25 @@ function getItemMultiplier(item, moveName, defenderName) {
   if (item === "Muscle Band" && move.category === "Physical") multiplier *= 1.1
   if (item === "Wise Glasses" && move.category === "Special") multiplier *= 1.1
 
-  if (item === "Expert Belt") {
-    try {
-      const defender = new Pokemon(gen, defenderName)
-      const typeData = gen.types.get(move.type)
-      const effectiveness = typeData.effectiveness(defender.types)
-      if (effectiveness > 1) multiplier *= 1.2
-    } catch {}
-  }
+ if (item === "Expert Belt") {
+  try {
+    const weaknesses = getWeaknesses(defenderName)
 
-  if (TYPE_BOOST_ITEMS[item]) {
-    const expectedType = TYPE_BOOST_ITEMS[item]
-    const actualType =
+    const moveType =
       typeof move.type === "string"
         ? move.type
         : move.type?.name
 
-    if (actualType === expectedType) {
+    const isSuperEffective = weaknesses.some(w => w.type === moveType)
+
+    if (isSuperEffective) {
       multiplier *= 1.2
     }
-  }
 
+  } catch (e) {
+    console.log("Expert Belt error:", e)
+  }
+}
   return multiplier
 }
 
@@ -816,15 +814,15 @@ function runCalc() {
   const spreadHitsTwoTargets =
     document.getElementById("spreadToggle").checked
 
-  let damageMultiplier = 1.0
+ let damageMultiplier = 1.0
 
-  if (selectedItem) {
-    damageMultiplier = getItemMultiplier(
-      selectedItem,
-      moveName,
-      defenderName
-    )
-  }
+for (const item of selectedItems) {
+  damageMultiplier *= getItemMultiplier(
+    item,
+    moveName,
+    defenderName
+  )
+}
 
   const boosts = {}
   if (boostAtk !== 0) boosts.atk = boostAtk
@@ -1062,22 +1060,23 @@ if (calcItemDropdown && calcItemSelected && calcItemList) {
         el.style.border = "1px solid #333"
       })
 
-      el.addEventListener("click", () => {
-        selectedItem = el.dataset.item
+      el.addEventListener("click", (e) => {
+  e.stopPropagation()
 
-        calcItemSelected.innerHTML = `
-          <img src="${getItemImage(selectedItem)}"
-               style="width:18px;height:18px;image-rendering:pixelated;" />
-          <span>${selectedItem}</span>
-          <span style="margin-left:auto;">▾</span>
-        `
+  const item = el.dataset.item
 
-        calcItemSearch.value = ""
-        renderCalcItems("")
-        calcItemList.style.display = "none"
+  if (selectedItems.includes(item)) {
+    selectedItems = selectedItems.filter(i => i !== item)
+  } else {
+    selectedItems.push(item)
+  }
 
-        runCalc()
-      })
+  renderSelectedCalcItems()
+
+  calcItemList.style.display = "none"
+
+  runCalc()
+})
     })
   }
 
@@ -1106,7 +1105,48 @@ if (calcItemDropdown && calcItemSelected && calcItemList) {
     }
   })
 
-  calcItemSelected.textContent = "None ▾"
+  renderSelectedCalcItems()
+}
+
+function renderSelectedCalcItems() {
+
+  if (!selectedItems.length) {
+    calcItemSelected.textContent = "None ▾"
+    return
+  }
+
+  calcItemSelected.innerHTML = `
+    ${selectedItems.map(item => `
+      <span data-remove="${item}"
+        style="
+          display:flex;
+          align-items:center;
+          gap:6px;
+          background:#222;
+          padding:4px 8px;
+          border-radius:8px;
+          font-size:13px;
+          cursor:pointer;
+          border:1px solid #333;
+        ">
+        <img src="${getItemImage(item)}"
+             style="width:16px;height:16px;image-rendering:pixelated;">
+        ${item}
+        <span style="color:#ff5252;font-weight:700;">✕</span>
+      </span>
+    `).join("")}
+    <span style="margin-left:auto;">▾</span>
+  `
+
+  calcItemSelected.querySelectorAll("[data-remove]").forEach(el => {
+    el.addEventListener("click", (e) => {
+      e.stopPropagation()
+      const item = el.dataset.remove
+      selectedItems = selectedItems.filter(i => i !== item)
+      renderSelectedCalcItems()
+      runCalc()
+    })
+  })
 }
 
   // ===== Events =====

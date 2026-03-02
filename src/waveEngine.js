@@ -98,15 +98,25 @@ export function getItemMultiplier({
   if (item === "Muscle Band" && move.category === "Physical") multiplier *= 1.1
   if (item === "Wise Glasses" && move.category === "Special") multiplier *= 1.1
 
-  if (item === "Expert Belt") {
-    try {
-      const defender = new Pokemon(gen, defenderName)
-      const typeData = gen.types.get(move.type)
-      const effectiveness = typeData.effectiveness(defender.types)
-      if (effectiveness > 1) multiplier *= 1.2
-    } catch {}
-  }
+if (item === "Expert Belt") {
+  try {
+    const weaknesses = getWeaknesses(defenderName)
 
+    const moveType =
+      typeof move.type === "string"
+        ? move.type
+        : move.type?.name
+
+    const isSuperEffective = weaknesses.some(w => w.type === moveType)
+
+    if (isSuperEffective) {
+      multiplier *= 1.2
+    }
+
+  } catch (e) {
+    console.log("Expert Belt error:", e)
+  }
+}
   if (TYPE_BOOST_ITEMS[item]) {
     const expectedType = TYPE_BOOST_ITEMS[item]
     const actualType =
