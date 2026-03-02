@@ -100,16 +100,11 @@ export function getItemMultiplier({
 
 if (item === "Expert Belt") {
   try {
-    const weaknesses = getWeaknesses(defenderName)
+    const defender = new Pokemon(gen, defenderName)
+    const typeData = gen.types.get(move.type)
+    const effectiveness = typeData.effectiveness(defender.types)
 
-    const moveType =
-      typeof move.type === "string"
-        ? move.type
-        : move.type?.name
-
-    const isSuperEffective = weaknesses.some(w => w.type === moveType)
-
-    if (isSuperEffective) {
+    if (effectiveness > 1) {
       multiplier *= 1.2
     }
 

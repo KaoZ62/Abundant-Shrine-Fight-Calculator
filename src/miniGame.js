@@ -2,9 +2,10 @@
 import { Generations } from "@smogon/calc"
 import { getSpeedInfo } from "./calculator.js"
 import {
-  groupWaves,
   computeWaveOHKO
 } from "./waveEngine.js"
+
+import { getWaveData } from "./waves.js"
 
 export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteUrl }) {
   container.innerHTML = `
@@ -93,9 +94,14 @@ export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteU
   ">
     
     <div>
-      <label>Wave:</label><br/>
-      <select id="animalSelect"></select>
-    </div>
+  <label>Starting Animal:</label><br/>
+  <select id="miniStartAnimal"></select>
+</div>
+
+<div>
+  <label>Animal:</label><br/>
+  <select id="animalSelect"></select>
+</div>
 
     <div>
       <label>Phase:</label><br/>
@@ -143,6 +149,7 @@ const ALL_TEAM_ITEMS = [
 ]
 
 const animalSelect = container.querySelector("#animalSelect")
+const miniStartAnimal = container.querySelector("#miniStartAnimal")
 const phaseSelect = container.querySelector("#phaseSelect")
 const miniOutput = container.querySelector("#miniOutput")
 const teamItemSelect = container.querySelector("#teamItemSelect")
@@ -349,17 +356,21 @@ if (teamItemSelect) {
 // ===== INIT SELECT OPTIONS =====
 
 const uniqueAnimals = [...new Set(RAW_WAVES.map(w => w.animal))]
+
 animalSelect.innerHTML = uniqueAnimals
   .map(a => `<option value="${a}">${a}</option>`)
   .join("")
 
-const uniquePhases = [...new Set(RAW_WAVES.map(w => w.phase))]
-  .sort((a,b) => a - b)
-
-phaseSelect.innerHTML = uniquePhases
-  .map(p => `<option value="${p}">${p}</option>`)
-  .join("")
-
+if (miniStartAnimal) {
+  miniStartAnimal.innerHTML = uniqueAnimals
+    .map(a => `<option value="${a}">${a}</option>`)
+    .join("")
+}
+phaseSelect.innerHTML = `
+  <option value="1">Phase 1</option>
+  <option value="2">Phase 2-3</option>
+  <option value="4">Phase 4-5</option>
+`
   if (!animalSelect || !phaseSelect || !miniOutput) return null
 
 
@@ -622,11 +633,18 @@ function renderValidatedTeam() {
   `
   return
 }
-const wavesGrouped = groupWaves(
-  RAW_WAVES,
-  selectedAnimal,
-  selectedPhase
-)
+const startAnimal = miniStartAnimal?.value
+
+const waveData = getWaveData({
+  phase: selectedPhase,
+  animal: selectedAnimal,
+  starter: startAnimal
+})
+
+if (!waveData) {
+  miniOutput.innerHTML += `<div style="color:#ff9800;">No waves found</div>`
+  return
+}
 
   miniOutput.innerHTML = `
   <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:#111;border:1px solid #333;font-size:13px;line-height:1.6;">
@@ -639,8 +657,8 @@ const wavesGrouped = groupWaves(
 <div><span style="color:#c62828;font-weight:700;">■</span> Possible OHKO but slower</div>
     </div>
   </div>
-` + Object.entries(wavesGrouped)
-    .map(([waveNumber, data]) => {
+` + [waveData]
+    .map((data) => {
       const teamItemsText = teamItems.length ? teamItems.join(" + ") : "None"
       return `
         <div style="
@@ -651,7 +669,7 @@ const wavesGrouped = groupWaves(
           border:1px solid #444;
         ">
           <div style="font-weight:700;margin-bottom:8px;">
-            Phase ${selectedPhase} – Wave ${waveNumber}
+            Phase ${selectedPhase} – Wave ${data.wave}
           </div>
 
           <div style="font-size:12px;opacity:0.85;margin-bottom:14px;">
@@ -732,7 +750,7 @@ color:${
   // ================= EVENTS =================
   animalSelect.addEventListener("change", renderMiniGame)
   phaseSelect.addEventListener("change", renderMiniGame)
-
+miniStartAnimal?.addEventListener("change", renderMiniGame)
   
 
   renderMiniItemSelected()

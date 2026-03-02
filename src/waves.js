@@ -3695,3 +3695,50 @@ export function buildWaveIndex(data) {
 export function getWave(globalWave, waveIndex) {
   return waveIndex[globalWave] ?? null
 }
+export function getWaveData({ phase, animal, starter }) {
+
+  const animalsOrder = [
+    "Dog","Pig","Rat","Ox","Tiger","Rabbit",
+    "Dragon","Snake","Horse","Goat","Monkey","Rooster"
+  ]
+
+  const starterIndex = animalsOrder.indexOf(starter)
+  const animalIndex  = animalsOrder.indexOf(animal)
+
+  if (starterIndex === -1 || animalIndex === -1) return null
+
+  // rotation circulaire
+  const localIndex =
+  ((animalIndex - starterIndex + 12) % 12)
+
+let phaseOffset = 0
+
+if (phase === 1) phaseOffset = 0
+if (phase === 2) phaseOffset = 12
+if (phase === 3) phaseOffset = 18
+if (phase === 4) phaseOffset = 24
+if (phase === 5) phaseOffset = 30
+
+const globalWave = phaseOffset + localIndex + 1
+
+  let level = 47
+
+if (globalWave >= 13 && globalWave <= 18) level = 48
+if (globalWave >= 19 && globalWave <= 24) level = 49
+if (globalWave >= 25 && globalWave <= 30) level = 50
+if (globalWave >= 31 && globalWave <= 36) level = 51
+
+  // récupérer les defenders depuis RAW_WAVES
+  const entries = RAW_WAVES.filter(w =>
+    w.animal === animal &&
+    w.phase === phase
+  )
+
+  if (!entries.length) return null
+
+  return {
+    wave: globalWave,
+    defenders: entries.map(e => e.defender),
+    level
+  }
+}

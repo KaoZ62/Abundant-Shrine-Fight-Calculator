@@ -3,7 +3,7 @@ import { calculateDamage, getSpeedInfo } from "./calculator.js"
 import { getFavorites, isFavorite, toggleFavorite } from "./favorites.js"
 import { createPicker, TYPE_COLORS, darkenColor } from "./picker.js"
 import { Generations, Move, Pokemon } from "@smogon/calc"
-import { RAW_WAVES, buildWaveIndex, getPhaseFromWave } from "./waves.js"
+import { RAW_WAVES, buildWaveIndex, getPhaseFromWave, getWaveData } from "./waves.js"
 import { initMiniGame } from "./miniGame.js"
 
 const waveIndex = buildWaveIndex(RAW_WAVES)
@@ -345,7 +345,7 @@ let selectedItems = []
         <div id="defWeaknesses" style="margin-top:10px;"></div>
         <div id="speedInfo" style="margin-top:14px;font-size:18px;font-weight:700;"></div>
         <div id="result" style="margin-top:18px;"></div>
-        <hr style="margin:30px 0;opacity:0.2;" />
+        
 
 
 
@@ -354,10 +354,15 @@ let selectedItems = []
   <h2 style="margin-bottom:12px;">Wave Preview</h2>
 
   <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
-    <div>
-      <label>Animal:</label><br/>
-      <select id="calcWaveAnimal"></select>
-    </div>
+  <div>
+  <label>Starting Animal:</label><br/>
+  <select id="calcStartAnimal"></select>
+</div>
+
+<div>
+  <label>Animal:</label><br/>
+  <select id="calcWaveAnimal"></select>
+</div>
 
     <div>
       <label>Phase:</label><br/>
@@ -365,8 +370,7 @@ let selectedItems = []
     </div>
   </div>
 
-  <div id="calcWaveOutput" style="margin-top:25px;"></div>
-
+<div id="calcWaveOutput" style="margin-top:20px;"></div>
 </div>
       </div>
 <div id="mini-game-section" style="display:none; margin-top:20px;"></div>
@@ -425,22 +429,30 @@ const waveModeToggle = document.getElementById("waveModeToggle")
 const waveModeContainer = document.getElementById("waveModeContainer")
 const calcWaveAnimal = document.getElementById("calcWaveAnimal")
 const calcWavePhase = document.getElementById("calcWavePhase")
+const calcStartAnimal = document.getElementById("calcStartAnimal")
 const calcWaveOutput = document.getElementById("calcWaveOutput")
 
 // ---- Init selects
 if (calcWaveAnimal && calcWavePhase) {
 
   const uniqueAnimals = [...new Set(RAW_WAVES.map(w => w.animal))]
+
   calcWaveAnimal.innerHTML = uniqueAnimals
     .map(a => `<option value="${a}">${a}</option>`)
     .join("")
 
-  const uniquePhases = [...new Set(RAW_WAVES.map(w => w.phase))]
-    .sort((a,b) => a - b)
+  // 🔹 AJOUTE ÇA ICI
+  if (calcStartAnimal) {
+    calcStartAnimal.innerHTML = uniqueAnimals
+      .map(a => `<option value="${a}">${a}</option>`)
+      .join("")
+  }
 
-  calcWavePhase.innerHTML = uniquePhases
-    .map(p => `<option value="${p}">${p}</option>`)
-    .join("")
+  calcWavePhase.innerHTML = `
+  <option value="1">Phase 1</option>
+  <option value="2">Phase 2-3</option>
+  <option value="4">Phase 4-5</option>
+`
 }
 
 if (waveModeToggle && waveModeContainer) {
@@ -493,6 +505,18 @@ function renderCalculatorWaves() {
 
   const selectedAnimal = String(calcWaveAnimal.value || "").trim()
   const selectedPhase = Number(calcWavePhase.value)
+  const startAnimal = calcStartAnimal?.value
+
+const waveData = getWaveData({
+  phase: selectedPhase,
+  animal: selectedAnimal,
+  starter: startAnimal
+})
+
+if (!waveData) {
+  calcWaveOutput.innerHTML = `<div style="color:#ff9800;">No waves found</div>`
+  return
+}
 
   const attackerInput = document.getElementById("attacker")
   const attackerLevelInput = document.getElementById("attackerLevel")
@@ -529,38 +553,11 @@ function renderCalculatorWaves() {
 
   // Récupère les waves correspondant à Animal + Phase
 // Même logique que Mini Game
-const filtered = RAW_WAVES.filter(row =>
-  Number(row.phase) === selectedPhase &&
-  String(row.animal).trim() === selectedAnimal
-)
+// Construire l'ordre global
 
-if (!filtered.length) {
-  calcWaveOutput.innerHTML = `<div style="color:#ff9800;">No waves found</div>`
-  return
-}
 
-// Grouper comme waveEngine
-const wavesGrouped = {}
 
-filtered.forEach(row => {
-  if (!wavesGrouped[row.wave]) {
-    wavesGrouped[row.wave] = {
-      level: row.level,
-      defenders: []
-    }
-  }
-
-  wavesGrouped[row.wave].defenders.push(row.defender)
-})
-
-// Convertir en tableau trié
-const wavesToRender = Object.entries(wavesGrouped)
-  .sort((a, b) => Number(a[0]) - Number(b[0]))
-
-  if (!wavesToRender.length) {
-    calcWaveOutput.innerHTML = `<div style="color:#ff9800;">No waves found</div>`
-    return
-  }
+ 
 
   const legendHtml = `
     <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:#111;border:1px solid #333;font-size:13px;line-height:1.6;">
@@ -574,86 +571,77 @@ const wavesToRender = Object.entries(wavesGrouped)
       </div>
     </div>
   `
+ 
+  const wavesHtml = `
+  <div style="margin-bottom:20px;padding:14px;border-radius:14px;background:#1a1a1a;border:1px solid #444;">
+    <div style="font-weight:700;margin-bottom:12px;">
+      Wave ${waveData.wave}
+    </div>
 
-  const wavesHtml = wavesToRender.map(([globalWave, data]) => {
-    const defendersHtml = (data.defenders || []).map((name) => {
-      const res = calculateDamage({
-        attackerName,
-        defenderName: name,
-        moveName,
-        attackerLevel,
-        defenderLevel: data.level,
-        evEnabled,
-        boosts,
-        damageMultiplier: selectedItem
-          ? getItemMultiplier(selectedItem, moveName, name)
-          : 1.0,
-        spreadHitsTwoTargets,
-        abilityEnabled
-      })
+    <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:14px;">
+      ${waveData.defenders.map(name => {
 
-      if (res?.error) {
+        let damageMultiplier = 1.0
+
+        for (const item of selectedItems) {
+          damageMultiplier *= getItemMultiplier(item, moveName, name)
+        }
+
+        const res = calculateDamage({
+          attackerName,
+          defenderName: name,
+          moveName,
+          attackerLevel,
+          defenderLevel: waveData.level,
+          evEnabled,
+          boosts,
+          damageMultiplier,
+          spreadHitsTwoTargets,
+          abilityEnabled
+        })
+
+        if (res?.error) return ""
+
+        const min = Number(res.percentMin)
+        const max = Number(res.percentMax)
+
+        const { attackerSpe, defenderSpe } = getSpeedInfo({
+          attackerName,
+          defenderName: name,
+          attackerLevel,
+          defenderLevel: waveData.level,
+          evEnabled
+        })
+
+        const movesFirst = attackerSpe >= defenderSpe
+
+        let percentColor = "#FF5252"
+
+        if (min >= 100) {
+          percentColor = movesFirst ? "#2e7d32" : "#9c27b0"
+        } else if (max >= 100) {
+          percentColor = movesFirst ? "#ff9800" : "#c62828"
+        }
+
         return `
           <div style="padding:10px;border-radius:12px;background:#111;border:1px solid #333;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
               <img src="${getSpriteUrl(name)}" style="width:50px;height:50px;image-rendering:pixelated;" />
-              <div style="font-weight:700;">${name} (Lvl ${data.level})</div>
+              <div style="font-weight:700;">
+                ${name} (Lvl ${waveData.level})
+              </div>
             </div>
-            <div style="margin-left:60px;font-size:12px;color:#ff9800;">
-              Error: ${res.message || "damage calc failed"}
+
+            <div style="margin-left:60px;font-size:13px;font-weight:700;color:${percentColor};">
+              ${min}% - ${max}%
             </div>
           </div>
         `
-      }
+      }).join("")}
+    </div>
+  </div>
+`
 
-      const min = Number(res.percentMin)
-      const max = Number(res.percentMax)
-
-      const speed = getSpeedInfo({
-        attackerName,
-        defenderName: name,
-        attackerLevel,
-        defenderLevel: data.level,
-        evEnabled
-      })
-
-      const faster = (speed?.attackerSpe ?? 0) > (speed?.defenderSpe ?? 0)
-
-      let color = "#c62828" // default rouge
-      if (min >= 100) {
-        color = faster ? "#2e7d32" : "#9c27b0"
-      } else if (max >= 100) {
-        color = faster ? "#ff9800" : "#c62828"
-      }
-
-      return `
-        <div style="padding:10px;border-radius:12px;background:#111;border:1px solid #333;">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-            <img src="${getSpriteUrl(name)}" style="width:50px;height:50px;image-rendering:pixelated;" />
-            <div style="font-weight:700;">
-              ${name} (Lvl ${data.level})
-            </div>
-          </div>
-
-          <div style="margin-left:60px;font-size:13px;font-weight:700;color:${color};">
-            ${min}% - ${max}%
-          </div>
-        </div>
-      `
-    }).join("")
-
-    return `
-      <div style="margin-bottom:20px;padding:14px;border-radius:14px;background:#1a1a1a;border:1px solid #444;">
-        <div style="font-weight:700;margin-bottom:12px;">
-          Wave ${globalWave}
-        </div>
-
-        <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:14px;">
-          ${defendersHtml}
-        </div>
-      </div>
-    `
-  }).join("")
 
   calcWaveOutput.innerHTML = legendHtml + wavesHtml
 }
@@ -1178,6 +1166,7 @@ function renderSelectedCalcItems() {
 
 calcWaveAnimal?.addEventListener("change", renderCalculatorWaves)
 calcWavePhase?.addEventListener("change", renderCalculatorWaves)
+calcStartAnimal?.addEventListener("change", renderCalculatorWaves)
 
   ;["boostAtk", "boostSpa", "spreadToggle"].forEach(id => {
     const el = document.getElementById(id)
