@@ -3,7 +3,7 @@ import { calculateDamage, getSpeedInfo } from "./calculator.js"
 import { getFavorites, isFavorite, toggleFavorite } from "./favorites.js"
 import { createPicker, TYPE_COLORS, darkenColor } from "./picker.js"
 import { Generations, Move, Pokemon } from "@smogon/calc"
-import { RAW_WAVES, buildWaveIndex } from "./waves.js"
+import { RAW_WAVES, buildWaveIndex, getPhaseFromWave } from "./waves.js"
 import { initMiniGame } from "./miniGame.js"
 
 const waveIndex = buildWaveIndex(RAW_WAVES)
@@ -303,37 +303,71 @@ let selectedItem = null
 
         <hr style="margin:22px 0;opacity:0.2;" />
 
-        <!-- Defender -->
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center;">
-          <label>Defender:</label>
+                
+<div style="display:flex;justify-content:flex-start;margin-bottom:10px;">
+  <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+    <input type="checkbox" id="waveModeToggle" />
+    Wave Mode
+  </label>
+</div>
 
-          <button id="defenderBtn" type="button"
-            style="
-              display:inline-flex;
-              align-items:center;
-              gap:12px;
-              padding:10px 18px;
-              border-radius:16px;
-              border:1px solid #888;
-              background:transparent;
-              color:inherit;
-              cursor:pointer;
-              flex:0 0 auto;
-            ">
-            <img id="defenderImg"
-              style="width:56px;height:56px;object-fit:contain;image-rendering:pixelated;flex:0 0 56px;" />
-            <span id="defenderLabel" style="font-size:18px;font-weight:700;"></span>
-          </button>
+        <!-- Defender (single mode only) -->
+<div id="singleDefenderBlock"
+     style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center;">
 
-          <input id="defender" type="hidden" value="${defaultDefender}" />
+  <label>Defender:</label>
 
-          <label>Def Lvl:</label>
-          <input id="defenderLevel" type="number" min="1" max="100" value="50" style="width:70px;" />
-        </div>
+  <button id="defenderBtn" type="button"
+    style="
+      display:inline-flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 18px;
+      border-radius:16px;
+      border:1px solid #888;
+      background:transparent;
+      color:inherit;
+      cursor:pointer;
+      flex:0 0 auto;
+    ">
+    <img id="defenderImg"
+      style="width:56px;height:56px;object-fit:contain;image-rendering:pixelated;flex:0 0 56px;" />
+    <span id="defenderLabel" style="font-size:18px;font-weight:700;"></span>
+  </button>
+
+  <input id="defender" type="hidden" value="${defaultDefender}" />
+
+  <label>Def Lvl:</label>
+  <input id="defenderLevel" type="number" min="1" max="100" value="50" style="width:70px;" />
+
+</div>
 
         <div id="defWeaknesses" style="margin-top:10px;"></div>
         <div id="speedInfo" style="margin-top:14px;font-size:18px;font-weight:700;"></div>
         <div id="result" style="margin-top:18px;"></div>
+        <hr style="margin:30px 0;opacity:0.2;" />
+
+
+
+<div id="waveModeContainer" style="display:none;">
+
+  <h2 style="margin-bottom:12px;">Wave Preview</h2>
+
+  <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;">
+    <div>
+      <label>Animal:</label><br/>
+      <select id="calcWaveAnimal"></select>
+    </div>
+
+    <div>
+      <label>Phase:</label><br/>
+      <select id="calcWavePhase"></select>
+    </div>
+  </div>
+
+  <div id="calcWaveOutput" style="margin-top:25px;"></div>
+
+</div>
       </div>
 <div id="mini-game-section" style="display:none; margin-top:20px;"></div>
   
@@ -363,90 +397,265 @@ let selectedItem = null
   `
 
   // ===== TAB SWITCH =====
-  const calculatorSection = document.getElementById("calculator-section")
-  const miniGameSection = document.getElementById("mini-game-section")
-  const tabCalc = document.getElementById("tab-calculator")
-  const tabMini = document.getElementById("tab-mini-game")
+const calculatorSection = document.getElementById("calculator-section")
+const miniGameSection = document.getElementById("mini-game-section")
+const tabCalc = document.getElementById("tab-calculator")
+const tabMini = document.getElementById("tab-mini-game")
 
-  if (tabCalc && tabMini && calculatorSection && miniGameSection) {
-    tabCalc.addEventListener("click", () => {
-      calculatorSection.style.display = "block"
-      miniGameSection.style.display = "none"
-    })
+if (tabCalc && tabMini && calculatorSection && miniGameSection) {
 
-    tabMini.addEventListener("click", () => {
-      calculatorSection.style.display = "none"
-      miniGameSection.style.display = "block"
-    })
+  function showCalculator() {
+    calculatorSection.style.display = "block"
+    miniGameSection.style.display = "none"
   }
 
-// ===== ROSTER LOGIC (Using Picker) =====
-
-const roster = []
-const rosterContainer = document.getElementById("rosterContainer")
-const addRosterBtn = document.getElementById("addRosterBtn")
-
-if (rosterContainer && addRosterBtn) {
-
-  function renderRoster() {
-    rosterContainer.innerHTML = roster.map((member, index) => `
-      <div style="
-        border:1px solid #444;
-        border-radius:14px;
-        padding:10px 14px;
-        background:#1a1a1a;
-        display:flex;
-        align-items:center;
-        gap:12px;
-        min-width:200px;
-      ">
-        <img src="${getSpriteUrl(member.name)}"
-             style="width:56px;height:56px;image-rendering:pixelated;" />
-
-        <div style="font-weight:700;">${member.name}</div>
-
-        <button data-index="${index}" 
-                class="removeRosterBtn"
-                style="margin-left:auto;background:#c62828;border:none;color:white;padding:4px 8px;border-radius:6px;cursor:pointer;">
-          ✕
-        </button>
-      </div>
-    `).join("")
-
-    document.querySelectorAll(".removeRosterBtn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const i = Number(btn.dataset.index)
-        roster.splice(i, 1)
-        renderRoster()
-      })
-    })
+  function showMiniGame() {
+    calculatorSection.style.display = "none"
+    miniGameSection.style.display = "block"
   }
 
-  // 👇 Utilise le picker existant
-  addRosterBtn.addEventListener("click", () => {
-    pickingTarget = "roster"
-    document.getElementById("pokeModalTitle").textContent = "Select Roster Pokémon"
-    document.getElementById("pokeModal").style.display = "flex"
-    document.getElementById("pokeSearch").value = ""
-    picker.renderGrid("")
-  })
+  tabCalc.addEventListener("click", showCalculator)
+  tabMini.addEventListener("click", showMiniGame)
 
-  // Hook dans setPickedPokemon
-  const originalSetPickedPokemon = setPickedPokemon
+  // Default view
+  showCalculator()
+}// ===== CALCULATOR WAVE MODE =====
 
-  setPickedPokemon = function(targetId, name) {
-    if (targetId === "roster") {
-      if (!roster.find(p => p.name === name)) {
-        roster.push({ name })
-        renderRoster()
-      }
-      closePicker()
-      pickingTarget = null
-      return
+const waveModeToggle = document.getElementById("waveModeToggle")
+const waveModeContainer = document.getElementById("waveModeContainer")
+const calcWaveAnimal = document.getElementById("calcWaveAnimal")
+const calcWavePhase = document.getElementById("calcWavePhase")
+const calcWaveOutput = document.getElementById("calcWaveOutput")
+
+// ---- Init selects
+if (calcWaveAnimal && calcWavePhase) {
+
+  const uniqueAnimals = [...new Set(RAW_WAVES.map(w => w.animal))]
+  calcWaveAnimal.innerHTML = uniqueAnimals
+    .map(a => `<option value="${a}">${a}</option>`)
+    .join("")
+
+  const uniquePhases = [...new Set(RAW_WAVES.map(w => w.phase))]
+    .sort((a,b) => a - b)
+
+  calcWavePhase.innerHTML = uniquePhases
+    .map(p => `<option value="${p}">${p}</option>`)
+    .join("")
+}
+
+if (waveModeToggle && waveModeContainer) {
+
+  const singleDefenderBlock = document.getElementById("singleDefenderBlock")
+  const defWeaknesses = document.getElementById("defWeaknesses")
+  const speedInfo = document.getElementById("speedInfo")
+  const resultBox = document.getElementById("result")
+
+  waveModeToggle.addEventListener("change", () => {
+
+    const enabled = waveModeToggle.checked
+
+    // Wave container
+    waveModeContainer.style.display = enabled ? "block" : "none"
+
+    // Hide single defender block
+    if (singleDefenderBlock) {
+      singleDefenderBlock.style.display = enabled ? "none" : "flex"
     }
 
-    originalSetPickedPokemon(targetId, name)
+    // Hide weaknesses
+    if (defWeaknesses) {
+      defWeaknesses.style.display = enabled ? "none" : "block"
+    }
+
+    // Hide speed
+    if (speedInfo) {
+      speedInfo.style.display = enabled ? "none" : "block"
+    }
+
+    // Hide result
+    if (resultBox) {
+      resultBox.style.display = enabled ? "none" : "block"
+    }
+
+    if (enabled) {
+      renderCalculatorWaves()
+    }
+  })
+}
+
+// ---- Render function
+function renderCalculatorWaves() {
+  // Si wave mode pas activé → rien
+  if (!waveModeToggle || !waveModeToggle.checked) return
+
+  // Sécurité DOM
+  if (!calcWaveOutput || !calcWaveAnimal || !calcWavePhase) return
+
+  const selectedAnimal = String(calcWaveAnimal.value || "").trim()
+  const selectedPhase = Number(calcWavePhase.value)
+
+  const attackerInput = document.getElementById("attacker")
+  const attackerLevelInput = document.getElementById("attackerLevel")
+  const evToggle = document.getElementById("evToggle")
+  const abilityToggle = document.getElementById("abilityToggle")
+  const boostAtkInput = document.getElementById("boostAtk")
+  const boostSpaInput = document.getElementById("boostSpa")
+  const spreadToggle = document.getElementById("spreadToggle")
+  const moveSelect = document.getElementById("move")
+
+  // Si un élément clé manque → évite le crash
+  if (!attackerInput || !attackerLevelInput || !evToggle || !abilityToggle || !boostAtkInput || !boostSpaInput || !spreadToggle || !moveSelect) {
+    calcWaveOutput.innerHTML = `<div style="color:#ff9800;">Wave preview: missing UI elements</div>`
+    return
   }
+
+  const attackerName = attackerInput.value
+  const attackerLevel = Number(attackerLevelInput.value || 50)
+  const evEnabled = evToggle.checked
+  const abilityEnabled = abilityToggle.checked
+  const boostAtk = Number(boostAtkInput.value || 0)
+  const boostSpa = Number(boostSpaInput.value || 0)
+  const spreadHitsTwoTargets = spreadToggle.checked
+  const moveName = String(moveSelect.value || "").trim()
+
+  if (!moveName) {
+    calcWaveOutput.innerHTML = `<div style="color:#ff9800;">Select a move first</div>`
+    return
+  }
+
+  const boosts = {}
+  if (boostAtk) boosts.atk = boostAtk
+  if (boostSpa) boosts.spa = boostSpa
+
+  // Récupère les waves correspondant à Animal + Phase
+// Même logique que Mini Game
+const filtered = RAW_WAVES.filter(row =>
+  Number(row.phase) === selectedPhase &&
+  String(row.animal).trim() === selectedAnimal
+)
+
+if (!filtered.length) {
+  calcWaveOutput.innerHTML = `<div style="color:#ff9800;">No waves found</div>`
+  return
+}
+
+// Grouper comme waveEngine
+const wavesGrouped = {}
+
+filtered.forEach(row => {
+  if (!wavesGrouped[row.wave]) {
+    wavesGrouped[row.wave] = {
+      level: row.level,
+      defenders: []
+    }
+  }
+
+  wavesGrouped[row.wave].defenders.push(row.defender)
+})
+
+// Convertir en tableau trié
+const wavesToRender = Object.entries(wavesGrouped)
+  .sort((a, b) => Number(a[0]) - Number(b[0]))
+
+  if (!wavesToRender.length) {
+    calcWaveOutput.innerHTML = `<div style="color:#ff9800;">No waves found</div>`
+    return
+  }
+
+  const legendHtml = `
+    <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:#111;border:1px solid #333;font-size:13px;line-height:1.6;">
+      <div style="font-weight:700;margin-bottom:6px;">Color Legend</div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:14px;">
+        <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO (moves first)</div>
+        <div><span style="color:#9c27b0;font-weight:700;">■</span> Guaranteed OHKO but slower</div>
+        <div><span style="color:#ff9800;font-weight:700;">■</span> Possible OHKO (moves first)</div>
+        <div><span style="color:#c62828;font-weight:700;">■</span> Possible OHKO but slower</div>
+      </div>
+    </div>
+  `
+
+  const wavesHtml = wavesToRender.map(([globalWave, data]) => {
+    const defendersHtml = (data.defenders || []).map((name) => {
+      const res = calculateDamage({
+        attackerName,
+        defenderName: name,
+        moveName,
+        attackerLevel,
+        defenderLevel: data.level,
+        evEnabled,
+        boosts,
+        damageMultiplier: selectedItem
+          ? getItemMultiplier(selectedItem, moveName, name)
+          : 1.0,
+        spreadHitsTwoTargets,
+        abilityEnabled
+      })
+
+      if (res?.error) {
+        return `
+          <div style="padding:10px;border-radius:12px;background:#111;border:1px solid #333;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+              <img src="${getSpriteUrl(name)}" style="width:50px;height:50px;image-rendering:pixelated;" />
+              <div style="font-weight:700;">${name} (Lvl ${data.level})</div>
+            </div>
+            <div style="margin-left:60px;font-size:12px;color:#ff9800;">
+              Error: ${res.message || "damage calc failed"}
+            </div>
+          </div>
+        `
+      }
+
+      const min = Number(res.percentMin)
+      const max = Number(res.percentMax)
+
+      const speed = getSpeedInfo({
+        attackerName,
+        defenderName: name,
+        attackerLevel,
+        defenderLevel: data.level,
+        evEnabled
+      })
+
+      const faster = (speed?.attackerSpe ?? 0) > (speed?.defenderSpe ?? 0)
+
+      let color = "#c62828" // default rouge
+      if (min >= 100) {
+        color = faster ? "#2e7d32" : "#9c27b0"
+      } else if (max >= 100) {
+        color = faster ? "#ff9800" : "#c62828"
+      }
+
+      return `
+        <div style="padding:10px;border-radius:12px;background:#111;border:1px solid #333;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <img src="${getSpriteUrl(name)}" style="width:50px;height:50px;image-rendering:pixelated;" />
+            <div style="font-weight:700;">
+              ${name} (Lvl ${data.level})
+            </div>
+          </div>
+
+          <div style="margin-left:60px;font-size:13px;font-weight:700;color:${color};">
+            ${min}% - ${max}%
+          </div>
+        </div>
+      `
+    }).join("")
+
+    return `
+      <div style="margin-bottom:20px;padding:14px;border-radius:14px;background:#1a1a1a;border:1px solid #444;">
+        <div style="font-weight:700;margin-bottom:12px;">
+          Wave ${globalWave}
+        </div>
+
+        <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:14px;">
+          ${defendersHtml}
+        </div>
+      </div>
+    `
+  }).join("")
+
+  calcWaveOutput.innerHTML = legendHtml + wavesHtml
 }
 
  
@@ -477,49 +686,52 @@ if (rosterContainer && addRosterBtn) {
   }
 
   function refreshSpeed() {
-    const attackerName = document.getElementById("attacker").value
-    const defenderName = document.getElementById("defender").value
+  const attackerName = document.getElementById("attacker").value
+  const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
+  const evEnabled = document.getElementById("evToggle").checked
 
-    const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
-    const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
-    const evEnabled = document.getElementById("evToggle").checked
+ 
 
-    const { attackerSpe, defenderSpe } = getSpeedInfo({
-      attackerName,
-      defenderName,
-      attackerLevel,
-      defenderLevel,
-      evEnabled
-    })
+  // 🔴 NORMAL MODE (inchangé)
+  const defenderName = document.getElementById("defender").value
+  const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
 
-    let text = "Speed tie"
-    let bg = "#ef6c00"
+  const { attackerSpe, defenderSpe } = getSpeedInfo({
+    attackerName,
+    defenderName,
+    attackerLevel,
+    defenderLevel,
+    evEnabled
+  })
 
-    if (attackerSpe > defenderSpe) {
-      text = "Attacker moves first"
-      bg = "#2e7d32"
-    } else if (defenderSpe > attackerSpe) {
-      text = "Defender moves first"
-      bg = "#c62828"
-    }
+  let text = "Speed tie"
+  let bg = "#ef6c00"
 
-    document.getElementById("speedInfo").innerHTML = `
-      <div style="
-        margin-top:18px;
-        padding:12px 16px;
-        border-radius:14px;
-        font-size:18px;
-        font-weight:800;
-        background:${bg};
-        color:white;
-        display:inline-block;
-        min-width:220px;
-        box-shadow:0 6px 18px rgba(0,0,0,0.35);
-      ">
-        ⚡ ${text}
-      </div>
-    `
+  if (attackerSpe > defenderSpe) {
+    text = "Attacker moves first"
+    bg = "#2e7d32"
+  } else if (defenderSpe > attackerSpe) {
+    text = "Defender moves first"
+    bg = "#c62828"
   }
+
+  document.getElementById("speedInfo").innerHTML = `
+    <div style="
+      margin-top:18px;
+      padding:12px 16px;
+      border-radius:14px;
+      font-size:18px;
+      font-weight:800;
+      background:${bg};
+      color:white;
+      display:inline-block;
+      min-width:220px;
+    ">
+      ⚡ ${text}
+    </div>
+  `
+}
+  
 function getItemMultiplier(item, moveName, defenderName) {
   if (!item) return 1.0
 
@@ -580,126 +792,133 @@ function getItemMultiplier(item, moveName, defenderName) {
 
   return multiplier
 }
-  function runCalc() {
-    const attackerName = document.getElementById("attacker").value
-    const defenderName = document.getElementById("defender").value
-    const moveName = document.getElementById("move").value
 
-    if (!moveName) {
-      document.getElementById("result").innerHTML = ""
-      return
-    }
+function runCalc() {
 
-    const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
-    const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
+  const attackerName = document.getElementById("attacker").value
+  const defenderName = document.getElementById("defender").value
+  const moveName = document.getElementById("move").value
 
-    const evEnabled = document.getElementById("evToggle").checked
-    const abilityEnabled = document.getElementById("abilityToggle").checked
-
-    const boostAtk = Number(document.getElementById("boostAtk").value)
-    const boostSpa = Number(document.getElementById("boostSpa").value)
-    let damageMultiplier = 1.0
-
-if (selectedItem) {
-  damageMultiplier = getItemMultiplier(
-    selectedItem,
-    moveName,
-    defenderName
-  )
-}
-    const spreadHitsTwoTargets = document.getElementById("spreadToggle").checked
-
-    const boosts = {}
-    if (boostAtk !== 0) boosts.atk = boostAtk
-    if (boostSpa !== 0) boosts.spa = boostSpa
-
-    const result = calculateDamage({
-      attackerName,
-      defenderName,
-      moveName,
-      attackerLevel,
-      defenderLevel,
-      evEnabled,
-      boosts,
-      damageMultiplier,
-      spreadHitsTwoTargets,
-      abilityEnabled
-    })
-console.log("UI RESULT", {
-  attacker: attackerName,
-  defender: defenderName,
-  level: defenderLevel,
-  min: result.percentMin,
-  max: result.percentMax,
-  hp: result.defenderHP
-})
-    if (result?.error) {
-      document.getElementById("result").innerHTML = `
-        <div style="color:#FF5252;font-weight:700;">
-          ⚠ Error with ${attackerName} using ${moveName}
-        </div>
-        <div style="margin-top:6px;font-size:12px;opacity:0.85;">
-          ${result.message}
-        </div>
-      `
-      return
-    }
-
-    const minPercent = Number(result.percentMin)
-    const maxPercent = Number(result.percentMax)
-
-    let color = "#FF5252"
-    if (minPercent >= 100) color = "#4CAF50"
-    else if (minPercent < 100 && maxPercent >= 100) color = "#FF9800"
-
-    let koText = "Does not KO"
-    let koBg = "#c62828"
-
-    if (minPercent >= 100) {
-      koText = "Guaranteed KO"
-      koBg = "#2e7d32"
-    } else if (minPercent < 100 && maxPercent >= 100) {
-      koText = "Possible KO"
-      koBg = "#ef6c00"
-    }
-
-    document.getElementById("result").innerHTML = `
-      <h2 style="margin-bottom:14px;">Result</h2>
-
-      <div style="
-        font-size:26px;
-        font-weight:800;
-        margin-bottom:14px;
-        color:${color};
-      ">
-        ${result.percentMin}% - ${result.percentMax}%
-      </div>
-
-      <div style="
-        padding:12px 16px;
-        border-radius:14px;
-        font-size:18px;
-        font-weight:800;
-        background:${koBg};
-        color:white;
-        display:inline-block;
-        min-width:220px;
-        box-shadow:0 6px 18px rgba(0,0,0,0.35);
-      ">
-        💥 ${koText}
-      </div>
-
-      ${
-        result.koChanceText && result.koChanceText !== "Je ne sais pas."
-          ? `
-            <div style="margin-top:12px;font-size:14px;opacity:0.85;">
-              ${result.koChanceText}
-            </div>
-          `
-          : ""
-      }
-    `
+  if (!moveName) {
+    document.getElementById("result").innerHTML = ""
+    return
   }
+
+  const attackerLevel = Number(document.getElementById("attackerLevel").value || 50)
+  const defenderLevel = Number(document.getElementById("defenderLevel").value || 50)
+
+  const evEnabled = document.getElementById("evToggle").checked
+  const abilityEnabled = document.getElementById("abilityToggle").checked
+
+  const boostAtk = Number(document.getElementById("boostAtk").value)
+  const boostSpa = Number(document.getElementById("boostSpa").value)
+
+  const spreadHitsTwoTargets =
+    document.getElementById("spreadToggle").checked
+
+  let damageMultiplier = 1.0
+
+  if (selectedItem) {
+    damageMultiplier = getItemMultiplier(
+      selectedItem,
+      moveName,
+      defenderName
+    )
+  }
+
+  const boosts = {}
+  if (boostAtk !== 0) boosts.atk = boostAtk
+  if (boostSpa !== 0) boosts.spa = boostSpa
+
+  const result = calculateDamage({
+    attackerName,
+    defenderName,
+    moveName,
+    attackerLevel,
+    defenderLevel,
+    evEnabled,
+    boosts,
+    damageMultiplier,
+    spreadHitsTwoTargets,
+    abilityEnabled
+  })
+
+  if (result?.error) {
+    document.getElementById("result").innerHTML = `
+      <div style="color:#FF5252;font-weight:700;">
+        ⚠ Error with ${attackerName} using ${moveName}
+      </div>
+      <div style="margin-top:6px;font-size:12px;opacity:0.85;">
+        ${result.message}
+      </div>
+    `
+    return
+  }
+
+  // ✅ ICI on définit correctement les pourcentages
+  const minPercent = Number(result.percentMin)
+  const maxPercent = Number(result.percentMax)
+
+  let color = "#FF5252"
+  if (minPercent >= 100) color = "#4CAF50"
+  else if (maxPercent >= 100) color = "#FF9800"
+
+  let koText = "Does not KO"
+  let koBg = "#c62828"
+
+  if (minPercent >= 100) {
+    koText = "Guaranteed KO"
+    koBg = "#2e7d32"
+  } else if (maxPercent >= 100) {
+    koText = "Possible KO"
+    koBg = "#ef6c00"
+  }
+
+  document.getElementById("result").innerHTML = `
+    <h2 style="margin-bottom:14px;">Result</h2>
+
+    <div style="
+      font-size:26px;
+      font-weight:800;
+      margin-bottom:14px;
+      color:${color};
+    ">
+      ${result.percentMin}% - ${result.percentMax}%
+    </div>
+
+    <div style="
+      padding:12px 16px;
+      border-radius:14px;
+      font-size:18px;
+      font-weight:800;
+      background:${koBg};
+      color:white;
+      display:inline-block;
+      min-width:220px;
+      box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    ">
+      💥 ${koText}
+    </div>
+
+    ${
+      result.koChanceText && result.koChanceText !== "Je ne sais pas."
+        ? `
+          <div style="margin-top:12px;font-size:14px;opacity:0.85;">
+            ${result.koChanceText}
+          </div>
+        `
+        : ""
+    }
+  `
+
+  // 🔵 Wave mode render
+  if (waveModeToggle && waveModeToggle.checked) {
+    renderCalculatorWaves()
+    console.log("Rendering waves")
+  }
+}
+    
+
 
   function setPickedPokemon(targetId, name) {
 
@@ -915,6 +1134,10 @@ if (calcItemDropdown && calcItemSelected && calcItemList) {
   })
 
   document.getElementById("abilityToggle").addEventListener("change", runCalc)
+ 
+
+calcWaveAnimal?.addEventListener("change", renderCalculatorWaves)
+calcWavePhase?.addEventListener("change", renderCalculatorWaves)
 
   ;["boostAtk", "boostSpa", "spreadToggle"].forEach(id => {
     const el = document.getElementById(id)
@@ -976,4 +1199,5 @@ if (miniGameSection) {
 
   window.openMiniGameRosterPicker = function () {
     openPicker("__MINIGAME_ROSTER__")
-  }}}
+  }
+}}

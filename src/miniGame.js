@@ -1,6 +1,10 @@
 // miniGame.js
-import { Generations, Move, Pokemon } from "@smogon/calc"
+import { Generations } from "@smogon/calc"
 import { getSpeedInfo } from "./calculator.js"
+import {
+  groupWaves,
+  computeWaveOHKO
+} from "./waveEngine.js"
 
 export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteUrl }) {
   container.innerHTML = `
@@ -358,87 +362,6 @@ phaseSelect.innerHTML = uniquePhases
 
   if (!animalSelect || !phaseSelect || !miniOutput) return null
 
-  // ================= TYPE BOOST ITEMS =================
-  const TYPE_BOOST_ITEMS = {
-    "Flame Plate": "Fire",
-    "Splash Plate": "Water",
-    "Zap Plate": "Electric",
-    "Meadow Plate": "Grass",
-    "Icicle Plate": "Ice",
-    "Fist Plate": "Fighting",
-    "Toxic Plate": "Poison",
-    "Earth Plate": "Ground",
-    "Sky Plate": "Flying",
-    "Mind Plate": "Psychic",
-    "Insect Plate": "Bug",
-    "Stone Plate": "Rock",
-    "Spooky Plate": "Ghost",
-    "Draco Plate": "Dragon",
-    "Dread Plate": "Dark",
-    "Iron Plate": "Steel"
-  }
-
-  // ================= ITEM MULTIPLIER (CUMUL) =================
-  function getItemMultiplier(item, moveName, defenderName) {
-  if (!item) return 1.0
-
-  let multiplier = 1.0
-  let move
-
-  try {
-    move = new Move(gen, moveName)
-  } catch {
-    return 1.0
-  }
-
-  const TYPE_BOOST_ITEMS = {
-    "Flame Plate": "Fire",
-    "Splash Plate": "Water",
-    "Zap Plate": "Electric",
-    "Meadow Plate": "Grass",
-    "Icicle Plate": "Ice",
-    "Fist Plate": "Fighting",
-    "Toxic Plate": "Poison",
-    "Earth Plate": "Ground",
-    "Sky Plate": "Flying",
-    "Mind Plate": "Psychic",
-    "Insect Plate": "Bug",
-    "Stone Plate": "Rock",
-    "Spooky Plate": "Ghost",
-    "Draco Plate": "Dragon",
-    "Dread Plate": "Dark",
-    "Iron Plate": "Steel"
-  }
-
-  if (item === "Life Orb") multiplier *= 1.3
-  if (item === "Choice Band" && move.category === "Physical") multiplier *= 1.5
-  if (item === "Choice Specs" && move.category === "Special") multiplier *= 1.5
-  if (item === "Muscle Band" && move.category === "Physical") multiplier *= 1.1
-  if (item === "Wise Glasses" && move.category === "Special") multiplier *= 1.1
-
-  if (item === "Expert Belt") {
-    try {
-      const defender = new Pokemon(gen, defenderName)
-      const typeData = gen.types.get(move.type)
-      const effectiveness = typeData.effectiveness(defender.types)
-      if (effectiveness > 1) multiplier *= 1.2
-    } catch {}
-  }
-
-  if (TYPE_BOOST_ITEMS[item]) {
-    const expectedType = TYPE_BOOST_ITEMS[item]
-    const actualType =
-      typeof move.type === "string"
-        ? move.type
-        : move.type?.name
-
-    if (actualType === expectedType) {
-      multiplier *= 1.2
-    }
-  }
-
-  return multiplier
-}
 
   // ================= VALIDATED TEAM RENDER =================
 function renderRoster() {
@@ -670,162 +593,7 @@ function renderValidatedTeam() {
     })
   })
 }
-  // ================= OHKO =================
-  function computeWaveOHKO(defenderName, level) {
-  const results = []
 
-  function attackerIsFaster(attackerName, defenderName, attackerLevel, defenderLevel, evEnabled) {
-    try {
-      const { attackerSpe, defenderSpe } = getSpeedInfo({
-        attackerName,
-        defenderName,
-        attackerLevel,
-        defenderLevel,
-        evEnabled
-      })
-      return attackerSpe > defenderSpe
-    } catch {
-      return true
-    }
-  }
-
-  const ITEM_PRIORITY = [
-    "Expert Belt","Muscle Band","Wise Glasses",
-    "Flame Plate","Splash Plate","Zap Plate","Meadow Plate",
-    "Icicle Plate","Fist Plate","Toxic Plate","Earth Plate",
-    "Sky Plate","Mind Plate","Insect Plate","Stone Plate",
-    "Spooky Plate","Draco Plate","Dread Plate","Iron Plate",
-    "Life Orb","Choice Band","Choice Specs"
-  ]
-
-  const sortedItems = ITEM_PRIORITY.filter(i => teamItems.includes(i))
-
-  function toNum(x) {
-    return Number(String(x).replace("%", "").trim())
-  }
-
- const teamToUse = activePokemon.length > 0
-  ? validatedTeam.filter(p => activePokemon.includes(p.name))
-  : validatedTeam
-
-for (const member of teamToUse) {
-    for (const moveName of member.priorityMoves || []) {
-        let normalizedMoveName = moveName
-
-if (moveName.startsWith("Hidden Power (") && moveName.endsWith(")")) {
-  normalizedMoveName = moveName
-    .replace("Hidden Power (", "Hidden Power ")
-    .replace(")", "")
-}
-
-      let moveObj
-      try {
-        moveObj = new Move(gen, moveName)
-      } catch {
-        continue
-      }
-
-      let bestGuaranteed = null
-      let bestPossible = null
-
-      function evaluate(min, max, itemUsed) {
-        const faster = attackerIsFaster(
-          member.name,
-          defenderName,
-          50,
-          level,
-          member.strengthCharm
-        )
-
-        // GUARANTEED
-        if (min >= 100) {
-          if (!bestGuaranteed) {
-            bestGuaranteed = {
-              attacker: member.name,
-              move: moveName,
-              item: itemUsed,
-              status: faster ? "guaranteedFast" : "guaranteedSlow"
-            }
-          }
-          return
-        }
-
-        // POSSIBLE
-        if (max >= 100) {
-          if (!bestPossible || max > bestPossible.max) {
-            bestPossible = {
-              attacker: member.name,
-              move: moveName,
-              item: itemUsed,
-              max,
-              status: faster ? "possibleFast" : "possibleSlow"
-            }
-          }
-        }
-      }
-if (moveName.toLowerCase().includes("hidden")) {
-  console.log("MiniGame moveName =", moveName)
-}
-      // 1️⃣ Test sans item
-      const base = calculateDamage({
-        attackerName: member.name,
-        defenderName,
-        moveName,
-        attackerLevel: 50,
-        defenderLevel: level,
-        evEnabled: member.strengthCharm,
-        boosts: {},
-        damageMultiplier: 1.0,
-        spreadHitsTwoTargets: false,
-        abilityEnabled: false
-      })
-      console.log("MINIGAME RESULT", {
-  attacker: member.name,
-  defender: defenderName,
-  level: level,
-  min: base.percentMin,
-  max: base.percentMax,
-  hp: base.defenderHP
-})
-
-      if (!base?.error) {
-        evaluate(toNum(base.percentMin), toNum(base.percentMax), null)
-      }
-
-      // 2️⃣ Test items
-      for (const item of sortedItems) {
-        const multiplier = getItemMultiplier(item, moveName, defenderName)
-
-        const res = calculateDamage({
-          attackerName: member.name,
-          defenderName,
-          moveName,
-          attackerLevel: 50,
-          defenderLevel: level,
-          evEnabled: member.strengthCharm,
-          boosts: {},
-          damageMultiplier: multiplier,
-          spreadHitsTwoTargets: false,
-          abilityEnabled: false
-        })
-
-        if (!res?.error) {
-          evaluate(toNum(res.percentMin), toNum(res.percentMax), item)
-        }
-      }
-
-      // 3️⃣ Choix final
-      if (bestGuaranteed) {
-        results.push(bestGuaranteed)
-      } else if (bestPossible) {
-        results.push(bestPossible)
-      }
-
-    }
-  }
-
-  return results
-}
   // ================= MINI GAME RENDER =================
  function renderMiniGame() {
   const selectedAnimal = animalSelect.value
@@ -854,14 +622,11 @@ if (moveName.toLowerCase().includes("hidden")) {
   `
   return
 }
-
-  const wavesGrouped = {}
-  filtered.forEach(row => {
-    if (!wavesGrouped[row.wave]) {
-      wavesGrouped[row.wave] = { level: row.level, defenders: [] }
-    }
-    wavesGrouped[row.wave].defenders.push(row.defender)
-  })
+const wavesGrouped = groupWaves(
+  RAW_WAVES,
+  selectedAnimal,
+  selectedPhase
+)
 
   miniOutput.innerHTML = `
   <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:#111;border:1px solid #333;font-size:13px;line-height:1.6;">
@@ -900,7 +665,18 @@ if (moveName.toLowerCase().includes("hidden")) {
             gap:14px;
           ">
             ${data.defenders.map(name => {
-              const ohkoResults = computeWaveOHKO(name, data.level)
+              const teamToUse = activePokemon.length > 0
+  ? validatedTeam.filter(p => activePokemon.includes(p.name))
+  : validatedTeam
+
+const ohkoResults = computeWaveOHKO({
+  defenderName: name,
+  level: data.level,
+  teamToUse,
+  teamItems,
+  calculateDamage,
+  getSpeedInfo
+})
 
               return `
                 <div style="
