@@ -112,8 +112,6 @@ function getWeaknesses(defenderName) {
   }
 }
 
-
-
 export function renderUI() {
   // ===== CALCULATOR ITEMS =====
 const CALC_ITEMS = [
@@ -774,6 +772,19 @@ function getItemMultiplier(item, moveName, defenderName) {
 
   } catch (e) {
     console.log("Expert Belt error:", e)
+  }
+}
+
+if (TYPE_BOOST_ITEMS[item]) {
+  const expectedType = TYPE_BOOST_ITEMS[item]
+
+  const actualType =
+    typeof move.type === "string"
+      ? move.type
+      : move.type?.name
+
+  if (actualType === expectedType) {
+    multiplier *= 1.2
   }
 }
   return multiplier

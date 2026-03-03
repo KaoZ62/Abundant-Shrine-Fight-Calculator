@@ -4,6 +4,11 @@
 import { Generations, Move, Pokemon } from "@smogon/calc"
 
 const gen = Generations.get(5)
+function toID(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+}
 
 // ================= GROUP WAVES =================
 
@@ -101,8 +106,26 @@ export function getItemMultiplier({
 if (item === "Expert Belt") {
   try {
     const defender = new Pokemon(gen, defenderName)
-    const typeData = gen.types.get(move.type)
-    const effectiveness = typeData.effectiveness(defender.types)
+
+    const moveTypeRaw =
+      typeof move.type === "string"
+        ? move.type
+        : move.type?.name
+
+    if (!moveTypeRaw) return multiplier
+
+    // ⚠️ gen.types.get attend un ID (ex: "fire"), pas "Fire"
+    const moveTypeData = gen.types.get(toID(moveTypeRaw))
+    if (!moveTypeData) return multiplier
+
+    const effTable = moveTypeData.effectiveness
+    if (!effTable) return multiplier
+
+    let effectiveness = 1
+
+    for (const defType of defender.types) {
+      effectiveness *= (effTable[defType] ?? 1)
+    }
 
     if (effectiveness > 1) {
       multiplier *= 1.2
