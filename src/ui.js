@@ -135,38 +135,58 @@ let selectedItems = []
   document.querySelector("#app").innerHTML = `
   
     <!-- TABS (top-left fixed) -->
-    <div style="
-      position:fixed;
-      top:16px;
-      left:16px;
-      display:flex;
-      gap:10px;
-      z-index:2000;
-    ">
-      <button id="tab-calculator"
-        style="
-          padding:8px 16px;
-          border-radius:12px;
-          border:1px solid #444;
-          background:#1a1a1a;
-          color:inherit;
-          cursor:pointer;
-        ">
-        Calculator
-      </button>
+   <!-- TABS (top-left fixed) -->
+<div style="
+  position:fixed;
+  top:16px;
+  left:16px;
+  display:flex;
+  gap:10px;
+  z-index:2000;
+">
 
-      <button id="tab-mini-game"
-        style="
-          padding:8px 16px;
-          border-radius:12px;
-          border:1px solid #444;
-          background:#1a1a1a;
-          color:inherit;
-          cursor:pointer;
-        ">
-        Mini Game
-      </button>
-    </div>
+  <button id="tab-calculator"
+    style="
+      padding:8px 16px;
+      border-radius:12px;
+      border:1px solid #444;
+      background:#1a1a1a;
+      color:inherit;
+      cursor:pointer;
+    ">
+    Calculator
+  </button>
+
+  <button id="tab-mini-game"
+    style="
+      padding:8px 16px;
+      border-radius:12px;
+      border:1px solid #444;
+      background:#1a1a1a;
+      color:inherit;
+      cursor:pointer;
+    ">
+    Mini Game
+  </button>
+</div>
+
+<!-- Important Notes Button -->
+<button id="notesBtn"
+  style="
+    position:fixed;
+    top:16px;
+    right:16px;
+    padding:8px 14px;
+    border-radius:12px;
+    border:1px solid #444;
+    background:#1a1a1a;
+    color:inherit;
+    cursor:pointer;
+    z-index:2000;
+  ">
+  Important Notes
+</button>
+    
 
     <div style="max-width:860px;margin:0 auto;padding:24px;text-align:center;padding-top:70px;">
       <!-- ================= CALCULATOR SECTION ================= -->
@@ -373,30 +393,137 @@ let selectedItems = []
       </div>
 <div id="mini-game-section" style="display:none; margin-top:20px;"></div>
   
-    <!-- Modal Pokémon Picker -->
-    <div id="pokeModal"
-      style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:18px;z-index:9999;">
-      <div style="width:min(920px, 96vw);max-height:85vh;overflow:auto;background:#111;border:1px solid #444;border-radius:16px;padding:14px;">
-        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
-          <div style="font-weight:700;" id="pokeModalTitle">Select Pokémon</div>
-          <button id="pokeClose" type="button"
-            style="padding:10px 14px;border-radius:12px;border:1px solid #444;background:transparent;color:inherit;cursor:pointer;">Close</button>
-        </div>
+  <!-- Modal Pokémon Picker -->
+<div id="pokeModal"
+  style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:18px;z-index:11000;">
 
-        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-          <input id="pokeSearch" placeholder="Search Pokémon..."
-            style="flex:1;min-width:240px;padding:10px;border-radius:12px;border:1px solid #444;background:#0b0b0b;color:inherit;" />
-          <div style="opacity:0.8;font-size:12px;" id="pokeCount"></div>
-        </div>
+  <div style="width:min(920px,96vw);max-height:85vh;overflow:auto;background:#111;border:1px solid #444;border-radius:16px;padding:14px;">
 
-        <div id="pokeFavorites"></div>
-
-        <div id="pokeGrid"
-          style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill, minmax(150px, 1fr));gap:10px;">
-        </div>
-      </div>
+    <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;">
+      <div style="font-weight:700;" id="pokeModalTitle">Select Pokémon</div>
+      <button id="pokeClose" type="button"
+        style="padding:10px 14px;border-radius:12px;border:1px solid #444;background:transparent;color:inherit;cursor:pointer;">
+        Close
+      </button>
     </div>
-  `
+
+    <div style="margin-top:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <input id="pokeSearch" placeholder="Search Pokémon..."
+        style="flex:1;min-width:240px;padding:10px;border-radius:12px;border:1px solid #444;background:#0b0b0b;color:inherit;" />
+      <div style="opacity:0.8;font-size:12px;" id="pokeCount"></div>
+    </div>
+
+    <div id="pokeFavorites"></div>
+
+    <div id="pokeGrid"
+      style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">
+    </div>
+
+  </div>
+</div>
+<!-- Important Notes Modal -->
+<div id="notesModal"
+  style="position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);padding:20px;z-index:10000;">
+  <div style="width:min(900px,95vw);max-height:85vh;overflow:auto;background:#111;border:1px solid #444;border-radius:16px;padding:20px;">
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:18px;">Important Notes</div>
+      <button id="notesClose"
+        style="padding:8px 14px;border-radius:10px;border:1px solid #444;background:transparent;color:inherit;cursor:pointer;">
+        Close
+      </button>
+    </div>
+
+    <div style="font-size:14px;line-height:1.6;">
+      <div style="font-size:14px;line-height:1.6;">
+
+   <h3>Calculator</h3>
+      <p>
+        Recommended when variation of Attack or Special Attack stats,
+        testing AOE (spread) moves, or using Wave Mode.
+      </p>
+
+      <h3>Wave Mode</h3>
+      <p>
+        Select the starting animal, the current animal, and the phase.
+        The tool displays all Pokémon in that wave with damage based on your selected Pokémon,
+        move, item, and stats variation.
+      </p>
+
+  <ul style="
+  width:fit-content;
+  margin:12px auto 0;
+  padding:0;
+  list-style-position:inside;
+  text-align:left;
+  line-height:1.6;
+">
+  <li>Defender Pokémon abilities are not taken into account (e.g. Sturdy).</li>
+  <li>Intimidate is not automatically simulated — adjust Attack manually if needed.</li>
+  <li>Not all Pokémon data is complete. Some moves may be missing.</li>
+</ul>
+
+  <h3>Mini Game</h3>
+
+  <h4>Item Optimization</h4>
+  <p>
+    All items in your bag are tested. If multiple items can KO,
+    the tool automatically selects the least powerful item sufficient to secure the KO.
+  </p>
+
+  <h4>Team Selection</h4>
+  <p>
+    By default, all Pokémon in your roster are selected.
+    You can manually validate specific Pokémon (they turn green) if you only want to use certain ones
+    for a specific wave to reduce unnecessary information.
+    You can also select or deselect moves for each Pokémon. If a move runs out of PP,
+    you can deselect it so it no longer appears.
+  </p>
+
+  <h4>Move Visibility</h4>
+  <p>
+    If a move does not appear under a Pokémon,
+    it means that even with the best item available in your bag,
+    it cannot achieve a possible KO.
+    This is intentional to avoid unnecessary information.
+  </p>
+
+<h4>General Disclaimer</h4>
+<p style="opacity:0.85;">
+  This tool may contain bugs, calculation mistakes, missing data, or edge cases that are not fully accounted for.
+  Not all abilities or interactions are automatically simulated.
+  This is a personal project built by a non-developer using ChatGPT to create a useful tool for the community.
+  Please double-check important calculations when necessary.
+  If you encounter any bug or miscalculation, feel free to let me know.
+</p>
+</div>
+    </div>
+
+  </div>
+</div>
+ `
+  const notesBtn = document.getElementById("notesBtn")
+const notesModal = document.getElementById("notesModal")
+const notesClose = document.getElementById("notesClose")
+
+if (notesBtn && notesModal && notesClose) {
+
+  notesBtn.addEventListener("click", () => {
+    notesModal.style.display = "flex"
+  })
+
+  notesClose.addEventListener("click", () => {
+    notesModal.style.display = "none"
+  })
+
+  notesModal.addEventListener("click", (e) => {
+    if (e.target === notesModal) {
+      notesModal.style.display = "none"
+    }
+  })
+}
+  
+  
 
   // ===== TAB SWITCH =====
 const calculatorSection = document.getElementById("calculator-section")
@@ -986,9 +1113,7 @@ for (const item of selectedItems) {
       : "Select Roster Pokémon"
 
     document.getElementById("pokeModal").style.display = "flex"
-    document.getElementById("pokeSearch").value = ""
     picker.renderGrid("")
-    document.getElementById("pokeSearch").focus()
   }
 
   function closePicker() {
@@ -1059,21 +1184,20 @@ if (calcItemDropdown && calcItemSelected && calcItemList) {
         el.style.border = "1px solid #333"
       })
 
-      el.addEventListener("click", (e) => {
+     el.addEventListener("click", (e) => {
   e.stopPropagation()
 
   const item = el.dataset.item
 
+  // ✅ Limite à 1 seul objet
   if (selectedItems.includes(item)) {
-    selectedItems = selectedItems.filter(i => i !== item)
+    selectedItems = []
   } else {
-    selectedItems.push(item)
+    selectedItems = [item]
   }
 
   renderSelectedCalcItems()
-
   calcItemList.style.display = "none"
-
   runCalc()
 })
     })
@@ -1152,10 +1276,11 @@ function renderSelectedCalcItems() {
   document.getElementById("attackerBtn").addEventListener("click", () => openPicker("attacker"))
   document.getElementById("defenderBtn").addEventListener("click", () => openPicker("defender"))
   document.getElementById("pokeClose").addEventListener("click", closePicker)
-
   document.getElementById("pokeSearch").addEventListener("input", (e) => {
-    picker.renderGrid(e.target.value || "")
-  })
+  picker.renderGrid(e.target.value || "")
+})
+
+ 
 
   document.getElementById("attackerLevel").addEventListener("input", () => {
     refreshSpeed()
