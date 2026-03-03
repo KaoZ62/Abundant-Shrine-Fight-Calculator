@@ -259,6 +259,10 @@ Ninetales: {
     moves: ["Return", "Shadow Claw", "Wake-Up Slap", "Fake Out"]
   },
 
+Hydreigon: {
+    ability: "Levitate",
+    moves: ["Dark Pulse", "Dragon Pulse"]
+  },
   Hoppip: {
     ability: "Chlorophyll",
     moves: ["Leaf Storm", "Acrobatics", "Stun Spore"]

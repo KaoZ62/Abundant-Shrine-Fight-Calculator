@@ -2004,6 +2004,17 @@ export const RAW_WAVES = [
     "defender": "Manectric",
     "tags": []
   },
+   {
+    "rowKey": "P3W4S9",
+    "waveKey": "P3W4",
+    "phase": 3,
+    "wave": 4,
+    "animal": "Dog",
+    "level": 50,
+    "slot": 9,
+    "defender": "Glaceon",
+    "tags": []
+  },
   {
     "rowKey": "P3W5S1",
     "waveKey": "P3W5",
@@ -2995,6 +3006,17 @@ export const RAW_WAVES = [
     "tags": []
   },
   {
+    "rowKey": "P4W4S9",
+    "waveKey": "P4W4",
+    "phase": 4,
+    "wave": 4,
+    "animal": "Dog",
+    "level": 52,
+    "slot": 9,
+    "defender": "Glaceon",
+    "tags": []
+  },
+  {
     "rowKey": "P4W4S7",
     "waveKey": "P4W4",
     "phase": 4,
@@ -3288,18 +3310,7 @@ export const RAW_WAVES = [
     "animal": "Tiger",
     "level": 53,
     "slot": 3,
-    "defender": "Eevee",
-    "tags": []
-  },
-  {
-    "rowKey": "P4W8S4",
-    "waveKey": "P4W8",
-    "phase": 4,
-    "wave": 8,
-    "animal": "Tiger",
-    "level": 53,
-    "slot": 4,
-    "defender": "Espeon",
+    "defender": "Zangoose",
     "tags": []
   },
   {
