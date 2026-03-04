@@ -1,10 +1,11 @@
 import { Generations, Pokemon, Move, calculate } from "@smogon/calc"
 import { pokemonData } from "./data.js"
 import { abundantStats } from "./abundantStats.js"
-
 const gen = Generations.get(5)
+
 // --- Custom Move Base Power Rules (Abundant Shrine) ---
 const MOVE_BP_OVERRIDES = {
+  // Gen 6 nerfs / buffs
   "Air Cutter": 60,
   "Assurance": 60,
   "Aura Sphere": 80,
@@ -54,7 +55,21 @@ const MOVE_BP_OVERRIDES = {
   "Thunderbolt": 90,
   "Vine Whip": 45,
   "Wake-Up Slap": 70,
-  "Water Pledge": 80
+  "Water Pledge": 80,
+
+  // Gen 7 buffs
+  "Absorb": 40,
+  "Mega Drain": 75,
+  "Leech Life": 80,
+  "Mystical Fire": 75,
+  "Fell Stinger": 50,
+  "Flying Press": 100,
+
+  // Gen 8 buffs
+  "Rapid Spin": 50,
+
+  // Gen 7 nerf
+  "Sucker Punch": 70
 }
 // --- Constants ---
 const NEUTRAL_ABILITY_OFF = "Illuminate" // Ability neutre utilisée quand Ability OFF
