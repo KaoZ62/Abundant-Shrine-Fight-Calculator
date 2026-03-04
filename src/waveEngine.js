@@ -245,17 +245,21 @@ let bestMin = Infinity
   const speedTie = attackerSpe === defenderSpe
 
   if (min >= 100) {
-    if (!bestGuaranteed) {
-      bestGuaranteed = {
-        attacker: member.name,
-        move: moveName,
-        item: itemUsed,
-        status: movesFirst ? "guaranteedFast" : "guaranteedSlow",
-        speedTie // ✅ NEW
-      }
+
+  if (min < bestMin) {
+    bestMin = min
+
+    bestGuaranteed = {
+      attacker: member.name,
+      move: moveName,
+      item: itemUsed,
+      status: movesFirst ? "guaranteedFast" : "guaranteedSlow",
+      speedTie
     }
-    return
   }
+
+  return
+}
 
   if (max >= 100) {
     if (!bestPossible || max > bestPossible.max) {

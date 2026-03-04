@@ -685,18 +685,41 @@ if (!waveData) {
 
  
 
-  const legendHtml = `
-    <div style="margin-bottom:16px;padding:12px;border-radius:12px;background:#111;border:1px solid #333;font-size:13px;line-height:1.6;">
-      <div style="font-weight:700;margin-bottom:6px;">Color Legend</div>
+const legendHtml = `
+  <div style="
+    margin-bottom:16px;
+    padding:14px;
+    border-radius:12px;
+    background:#111;
+    border:1px solid #333;
+    text-align:center;
+  ">
 
-      <div style="display:flex;flex-wrap:wrap;gap:14px;">
-        <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO (moves first)</div>
-        <div><span style="color:#9c27b0;font-weight:700;">■</span> Guaranteed OHKO but slower</div>
-        <div><span style="color:#ff9800;font-weight:700;">■</span> Possible OHKO (moves first)</div>
-        <div><span style="color:#c62828;font-weight:700;">■</span> Possible OHKO but slower</div>
-      </div>
+    <div style="
+      font-weight:700;
+      margin-bottom:10px;
+      font-size:16px;
+    ">
+      Speed Legend
     </div>
-  `
+
+    <div style="
+  display:flex;
+  justify-content:center;
+  gap:60px;
+  flex-wrap:wrap;
+  font-size:16px;
+  font-weight:600;
+">
+
+  <div>⚡ You move first</div>
+  <div>🐢 Opponent moves first</div>
+  <div>🤝 Speed tie</div>
+
+</div>
+
+  </div>
+`
  
   const wavesHtml = `
   <div style="margin-bottom:20px;padding:14px;border-radius:14px;background:#1a1a1a;border:1px solid #444;">
@@ -751,27 +774,66 @@ if (!waveData) {
         })
 
         const movesFirst = attackerSpe >= defenderSpe
+        const speedTie = attackerSpe === defenderSpe
+     let speedIcon = ""
 
-        let percentColor = "#FF5252"
+if (speedTie) speedIcon = "🤝"
+else if (movesFirst) speedIcon = "⚡"
+else speedIcon = "🐢"
 
-        if (min >= 100) {
-          percentColor = movesFirst ? "#2e7d32" : "#9c27b0"
-        } else if (max >= 100) {
-          percentColor = movesFirst ? "#ff9800" : "#c62828"
-        }
+     let percentColor = "#c62828" // rouge
+
+if (min >= 100) {
+  percentColor = "#2e7d32" // vert
+} else if (max >= 100) {
+  percentColor = "#ff9800" // orange
+}
 
         return `
           <div style="padding:10px;border-radius:12px;background:#111;border:1px solid #333;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-              <img src="${getSpriteUrl(name)}" style="width:50px;height:50px;image-rendering:pixelated;" />
-              <div style="font-weight:700;">
-                ${name} (Lvl ${waveData.level})
-              </div>
-            </div>
+           <div style="
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  margin-bottom:8px;
+">
 
-            <div style="margin-left:60px;font-size:13px;font-weight:700;color:${percentColor};">
-              ${min}% - ${max}%
-            </div>
+  <div style="
+  width:70px;
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+">
+  <img src="${getSpriteUrl(name)}"
+       style="
+         max-width:70px;
+         max-height:60px;
+         image-rendering:pixelated;
+       " />
+</div>
+
+  <div style="font-weight:700;">
+    ${name} (Lvl ${waveData.level})
+  </div>
+
+</div>
+
+<div style="
+  text-align:center;
+  font-size:13px;
+  font-weight:700;
+  color:${percentColor};
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:6px;
+">
+  <span>${min}% - ${max}%</span>
+  <span style="font-size:18px;">${speedIcon}</span>
+</div>
           </div>
         `
       }).join("")}
@@ -991,6 +1053,14 @@ function runCalc() {
   const attackerName = document.getElementById("attacker").value
   const defenderName = document.getElementById("defender").value
   const moveName = document.getElementById("move").value
+  const moveData = new Move(gen, moveName)
+
+console.log("MOVE DATA", {
+  name: moveData.name,
+  basePower: moveData.bp,
+  type: moveData.type,
+  category: moveData.category
+})
 
   if (!moveName) {
     document.getElementById("result").innerHTML = ""
@@ -1035,6 +1105,7 @@ for (const item of selectedItems) {
     spreadHitsTwoTargets,
     abilityEnabled
   })
+  
 
   if (result?.error) {
     document.getElementById("result").innerHTML = `
@@ -1171,19 +1242,29 @@ for (const item of selectedItems) {
   runCalc()
 }
 
-  function openPicker(targetId) {
-    console.log("OPEN PICKER CALLED", targetId)
-    pickingTarget = targetId
-    document.getElementById("pokeModalTitle").textContent =
-  targetId === "attacker"
-    ? "Select Attacker"
-    : targetId === "defender"
-      ? "Select Defender"
-      : "Select Roster Pokémon"
+function openPicker(targetId) {
+  console.log("OPEN PICKER CALLED", targetId)
+  pickingTarget = targetId
 
-    document.getElementById("pokeModal").style.display = "flex"
-    picker.renderGrid("")
-  }
+  document.getElementById("pokeModalTitle").textContent =
+    targetId === "attacker"
+      ? "Select Attacker"
+      : targetId === "defender"
+        ? "Select Defender"
+        : "Select Roster Pokémon"
+
+  document.getElementById("pokeModal").style.display = "flex"
+  picker.renderGrid("")
+
+  // 🔎 Focus automatically on the search bar
+  setTimeout(() => {
+    const search = document.getElementById("pokeSearch")
+    if (search) {
+      search.focus()
+      search.select()
+    }
+  }, 0)
+}
 
   function closePicker() {
     document.getElementById("pokeModal").style.display = "none"

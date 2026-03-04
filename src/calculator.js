@@ -3,8 +3,59 @@ import { pokemonData } from "./data.js"
 import { abundantStats } from "./abundantStats.js"
 
 const gen = Generations.get(5)
-
-
+// --- Custom Move Base Power Rules (Abundant Shrine) ---
+const MOVE_BP_OVERRIDES = {
+  "Air Cutter": 60,
+  "Assurance": 60,
+  "Aura Sphere": 80,
+  "Blizzard": 110,
+  "Bubble": 40,
+  "Chatter": 65,
+  "Crabhammer": 100,
+  "Draco Meteor": 130,
+  "Dragon Pulse": 85,
+  "Energy Ball": 90,
+  "Fire Blast": 110,
+  "Fire Pledge": 80,
+  "Flamethrower": 90,
+  "Frost Breath": 60,
+  "Fury Cutter": 40,
+  "Future Sight": 120,
+  "Grass Pledge": 80,
+  "Heat Wave": 95,
+  "Hex": 65,
+  "Hidden Power": 60,
+  "Hurricane": 110,
+  "Hydro Pump": 110,
+  "Ice Beam": 90,
+  "Incinerate": 60,
+  "Knock Off": 65,
+  "Leaf Storm": 130,
+  "Lick": 30,
+  "Low Sweep": 65,
+  "Magma Storm": 100,
+  "Meteor Mash": 90,
+  "Muddy Water": 90,
+  "Overheat": 130,
+  "Pin Missile": 25,
+  "Power Gem": 80,
+  "Rock Tomb": 60,
+  "Skull Bash": 130,
+  "Smelling Salts": 70,
+  "Smog": 30,
+  "Snore": 50,
+  "Storm Throw": 60,
+  "Struggle Bug": 50,
+  "Surf": 90,
+  "Synchronoise": 120,
+  "Techno Blast": 120,
+  "Thief": 60,
+  "Thunder": 110,
+  "Thunderbolt": 90,
+  "Vine Whip": 45,
+  "Wake-Up Slap": 70,
+  "Water Pledge": 80
+}
 // --- Constants ---
 const NEUTRAL_ABILITY_OFF = "Illuminate" // Ability neutre utilisée quand Ability OFF
 
@@ -30,6 +81,24 @@ function applyModifierGen5(baseDamage, modifier4096) {
   const int = Math.floor(x / 4096)
   const frac = x % 4096
   return frac <= 2048 ? int : int + 1
+}
+function buildMove(moveName) {
+  const name = normKey(moveName)
+
+  let customBP = MOVE_BP_OVERRIDES[name]
+
+  // Hidden Power Ice / Hidden Power Grass etc
+  if (!customBP && name.startsWith("Hidden Power")) {
+    customBP = MOVE_BP_OVERRIDES["Hidden Power"]
+  }
+
+  if (customBP !== undefined) {
+    return new Move(gen, name, {
+      overrides: { basePower: customBP }
+    })
+  }
+
+  return new Move(gen, name)
 }
 
 // --- Builders ---
@@ -142,7 +211,7 @@ export function calculateDamage({
    // --- Validate Move via engine ---
  let move
 try {
-  move = new Move(gen, mvName)
+  move = buildMove(mvName)
 } catch {
   return {
     error: true,
@@ -182,13 +251,7 @@ try {
 let [rawMin, rawMax] = result.range()
 const hp = defender.stats.hp
 
-// ✅ Mini-game rule: force Hidden Power to behave like 60 BP instead of 70 BP (Gen 5 calc uses 70 with 31 IVs)
-// We rescale final damage by 60/70. This is an approximation (rounding differences may exist).
-if (mvName.toLowerCase().startsWith("hidden power")) {
-  const scale = 60 / 70
-  rawMin = Math.floor(rawMin * scale)
-  rawMax = Math.floor(rawMax * scale)
-}
+
 
     const mult = Number(damageMultiplier || 1.0)
 
