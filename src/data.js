@@ -345,12 +345,12 @@ Hydreigon: {
     moves: ["Gunk Shot", "Drill Run", "Thunderbolt"]
   },
 
-  "Nidoran♀": {
+  "Nidoran-F": {
     ability: "Hustle",
     moves: ["Sludge Bomb", "Earth Power", "Blizzard", "Toxic"]
   },
 
-  "Nidoran♂": {
+  "Nidoran-M": {
     ability: "Hustle",
     moves: ["Poison Jab", "Drill Run", "Thunderbolt", "Lovely Kiss"]
   },

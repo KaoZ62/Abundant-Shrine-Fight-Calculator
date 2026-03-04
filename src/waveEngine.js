@@ -1,3 +1,4 @@
+
 // waveEngine.js
 // PURE LOGIC — NO DOM
 
@@ -229,41 +230,46 @@ export function computeWaveOHKO({
 
       let bestGuaranteed = null
       let bestPossible = null
+let bestMin = Infinity
+    function evaluate(min, max, itemUsed) {
+  // ✅ speed info
+  const { attackerSpe, defenderSpe } = getSpeedInfo({
+    attackerName: member.name,
+    defenderName,
+    attackerLevel: 50,
+    defenderLevel: level,
+    evEnabled: member.strengthCharm
+  })
 
-      function evaluate(min, max, itemUsed) {
-        const faster = attackerIsFaster({
-          attackerName: member.name,
-          defenderName,
-          attackerLevel: 50,
-          defenderLevel: level,
-          evEnabled: member.strengthCharm,
-          getSpeedInfo
-        })
+  const movesFirst = attackerSpe >= defenderSpe   // tie = ok mais warning
+  const speedTie = attackerSpe === defenderSpe
 
-        if (min >= 100) {
-          if (!bestGuaranteed) {
-            bestGuaranteed = {
-              attacker: member.name,
-              move: moveName,
-              item: itemUsed,
-              status: faster ? "guaranteedFast" : "guaranteedSlow"
-            }
-          }
-          return
-        }
-
-        if (max >= 100) {
-          if (!bestPossible || max > bestPossible.max) {
-            bestPossible = {
-              attacker: member.name,
-              move: moveName,
-              item: itemUsed,
-              max,
-              status: faster ? "possibleFast" : "possibleSlow"
-            }
-          }
-        }
+  if (min >= 100) {
+    if (!bestGuaranteed) {
+      bestGuaranteed = {
+        attacker: member.name,
+        move: moveName,
+        item: itemUsed,
+        status: movesFirst ? "guaranteedFast" : "guaranteedSlow",
+        speedTie // ✅ NEW
       }
+    }
+    return
+  }
+
+  if (max >= 100) {
+    if (!bestPossible || max > bestPossible.max) {
+      bestPossible = {
+        attacker: member.name,
+        move: moveName,
+        item: itemUsed,
+        max,
+        status: movesFirst ? "possibleFast" : "possibleSlow",
+        speedTie // ✅ NEW
+      }
+    }
+  }
+}
 
       const base = calculateDamage({
         attackerName: member.name,

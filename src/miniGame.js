@@ -82,9 +82,14 @@ export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteU
 
     </div>
   </div>
-    <!-- ===== SETTINGS ===== -->
+   <!-- ===== SETTINGS ===== -->
+<div style="
+  margin-top:30px;
+  position:relative;
+">
+
+  <!-- bloc centré -->
   <div style="
-    margin-top:30px;
     display:flex;
     gap:40px;
     flex-wrap:wrap;
@@ -94,22 +99,39 @@ export function initMiniGame({ container, RAW_WAVES, calculateDamage, getSpriteU
   ">
     
     <div>
-  <label>Starting Animal:</label><br/>
-  <select id="miniStartAnimal"></select>
-</div>
-
-<div>
-  <label>Animal:</label><br/>
-  <select id="animalSelect"></select>
-</div>
+      <label>Starting Animal:</label><br/>
+      <select id="miniStartAnimal"></select>
+    </div>
 
     <div>
+      <label>Animal:</label><br/>
+      <select id="animalSelect"></select>
+    </div>
+
+    <div id="phaseBlock">
       <label>Phase:</label><br/>
       <select id="phaseSelect"></select>
     </div>
 
   </div>
 
+  <!-- checkbox à droite de Phase -->
+ <label style="
+  position:absolute;
+  left:calc(50% + 220px);
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:pointer;
+  white-space:nowrap;
+">
+    <input type="checkbox" id="greenOnlyToggle" />
+    Show only guaranteed OHKO 
+  </label>
+
+</div>
   <!-- ===== WAVES ===== -->
   <div id="miniOutput" style="margin-top:30px;"></div>
 
@@ -152,6 +174,7 @@ const animalSelect = container.querySelector("#animalSelect")
 const miniStartAnimal = container.querySelector("#miniStartAnimal")
 const phaseSelect = container.querySelector("#phaseSelect")
 const miniOutput = container.querySelector("#miniOutput")
+const greenOnlyToggle = container.querySelector("#greenOnlyToggle")
 const teamItemSelect = container.querySelector("#teamItemSelect")
 const validatedTeamContainer = container.querySelector("#validatedTeamContainer")
 const rosterContainer = container.querySelector("#rosterContainer")
@@ -622,7 +645,7 @@ function renderValidatedTeam() {
       <div style="font-weight:700;margin-bottom:6px;">Color Legend</div>
 
       <div style="display:flex;flex-wrap:wrap;gap:14px;">
-        <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO (moves first)</div>
+        <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO</div>
 <div><span style="color:#9c27b0;font-weight:700;">■</span> Guaranteed OHKO but slower</div>
 <div><span style="color:#ff9800;font-weight:700;">■</span> Possible OHKO (moves first)</div>
 <div><span style="color:#c62828;font-weight:700;">■</span> Possible OHKO but slower</div>
@@ -651,7 +674,7 @@ if (!waveData) {
     <div style="font-weight:700;margin-bottom:6px;">Color Legend</div>
 
     <div style="display:flex;flex-wrap:wrap;gap:14px;">
-      <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO (moves first)</div>
+      <div><span style="color:#2e7d32;font-weight:700;">■</span> Guaranteed OHKO </div>
 <div><span style="color:#9c27b0;font-weight:700;">■</span> Guaranteed OHKO but slower</div>
 <div><span style="color:#ff9800;font-weight:700;">■</span> Possible OHKO (moves first)</div>
 <div><span style="color:#c62828;font-weight:700;">■</span> Possible OHKO but slower</div>
@@ -668,9 +691,20 @@ if (!waveData) {
           background:#1a1a1a;
           border:1px solid #444;
         ">
-          <div style="font-weight:700;margin-bottom:8px;">
-            Phase ${selectedPhase} – Wave ${data.wave}
-          </div>
+          <div style="
+  font-weight:700;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+">
+  <button id="prevAnimalBtn">◀</button>
+
+  Phase ${selectedPhase} – Wave ${data.wave}
+
+  <button id="nextAnimalBtn">▶</button>
+</div>
 
           <div style="font-size:12px;opacity:0.85;margin-bottom:14px;">
   Team Items: <b>${teamItemsText}</b><br/>
@@ -695,6 +729,11 @@ const ohkoResults = computeWaveOHKO({
   calculateDamage,
   getSpeedInfo
 })
+let results = ohkoResults
+
+if (greenOnlyToggle?.checked) {
+  results = results.filter(r => r.status === "guaranteedFast")
+}
 
               return `
                 <div style="
@@ -712,8 +751,8 @@ const ohkoResults = computeWaveOHKO({
                   </div>
 
                   ${
-  ohkoResults.length
-    ? ohkoResults.map(r => `
+  results.length
+    ? results.map(r => `
         <div style="
           margin-left:60px;
           margin-bottom:6px;
@@ -732,7 +771,12 @@ color:${
 };
 
         ">
-          ${r.attacker} – ${r.move}${r.item ? ` <span style="opacity:0.8;font-weight:500;">(${r.item})</span>` : ""}
+         ${r.attacker} – ${r.move}
+${r.status === "guaranteedFast" && r.speedTie
+  ? ` <span style="color:#ff5252;font-weight:700;">(⚠ speed tie)</span>`
+  : ""
+}
+${r.item ? ` <span style="opacity:0.8;font-weight:500;">(${r.item})</span>` : ""}
         </div>
       `).join("")
     : ""
@@ -746,11 +790,84 @@ color:${
       `
           })
     .join("")
+    const prev = miniOutput.querySelector("#prevAnimalBtn")
+const next = miniOutput.querySelector("#nextAnimalBtn")
+
+// animaux réellement présents dans la phase
+const phaseAnimals = [...new Set(
+  RAW_WAVES
+    .filter(w => Number(w.phase) === selectedPhase)
+    .sort((a,b)=>a.wave-b.wave)
+    .map(w => w.animal)
+)]
+
+const index = Math.max(0, phaseAnimals.indexOf(selectedAnimal))
+
+if (prev) {
+ prev.onclick = () => {
+
+  const starter = miniStartAnimal.value
+
+  let prevIndex = index - 1
+  let prevAnimal
+
+  if (prevIndex < 0) {
+    prevIndex = phaseAnimals.length - 1
+  }
+
+  prevAnimal = phaseAnimals[prevIndex]
+
+  // si on quitte le starter → phase précédente
+  if (selectedAnimal === starter) {
+    const phases = [...phaseSelect.options].map(o => Number(o.value))
+    const phaseIndex = phases.indexOf(selectedPhase)
+
+    if (phaseIndex > 0) {
+      phaseSelect.value = phases[phaseIndex - 1]
+    }
+  }
+
+  animalSelect.value = prevAnimal
+
+  renderMiniGame()
+}
+}
+
+if (next) {
+ next.onclick = () => {
+
+  const starter = miniStartAnimal.value
+
+  let nextIndex = index + 1
+  let nextAnimal
+
+  if (nextIndex >= phaseAnimals.length) {
+    nextIndex = 0
+  }
+
+  nextAnimal = phaseAnimals[nextIndex]
+
+  // si on revient sur le starter → phase suivante
+  if (nextAnimal === starter) {
+    const phases = [...phaseSelect.options].map(o => Number(o.value))
+    const phaseIndex = phases.indexOf(selectedPhase)
+
+    if (phaseIndex < phases.length - 1) {
+      phaseSelect.value = phases[phaseIndex + 1]
+    }
+  }
+
+  animalSelect.value = nextAnimal
+
+  renderMiniGame()
+}
+}
 }
   // ================= EVENTS =================
   animalSelect.addEventListener("change", renderMiniGame)
   phaseSelect.addEventListener("change", renderMiniGame)
 miniStartAnimal?.addEventListener("change", renderMiniGame)
+greenOnlyToggle?.addEventListener("change", renderMiniGame)
   
 
   renderMiniItemSelected()

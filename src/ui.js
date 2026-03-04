@@ -14,8 +14,9 @@ const gen = Generations.get(5)
 
 // --- Sprites (Option 1: PokemonDB) ---
 function toPokemonDbId(name) {
-  if (name === "Nidoran♀") return "nidoran-f"
-  if (name === "Nidoran♂") return "nidoran-m"
+
+  if (name === "Nidoran-F") return "nidoran-f"
+  if (name === "Nidoran-M") return "nidoran-m"
 
   return name
     .toLowerCase()
@@ -699,9 +700,20 @@ if (!waveData) {
  
   const wavesHtml = `
   <div style="margin-bottom:20px;padding:14px;border-radius:14px;background:#1a1a1a;border:1px solid #444;">
-    <div style="font-weight:700;margin-bottom:12px;">
-      Wave ${waveData.wave}
-    </div>
+    <div style="
+  font-weight:700;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+">
+  <button id="calcPrevAnimal">◀</button>
+
+  Wave ${waveData.wave}
+
+  <button id="calcNextAnimal">▶</button>
+</div>
 
     <div style="display:grid;grid-template-columns: repeat(3, 1fr);gap:14px;">
       ${waveData.defenders.map(name => {
@@ -769,6 +781,63 @@ if (!waveData) {
 
 
   calcWaveOutput.innerHTML = legendHtml + wavesHtml
+  const prev = document.getElementById("calcPrevAnimal")
+const next = document.getElementById("calcNextAnimal")
+
+
+const starter = calcStartAnimal.value
+
+// ordre des animaux
+const animals = [...new Set(
+  RAW_WAVES.map(w => w.animal)
+)]
+
+const index = animals.indexOf(selectedAnimal)
+
+if (next) {
+  next.onclick = () => {
+
+    let nextIndex = index + 1
+    if (nextIndex >= animals.length) nextIndex = 0
+
+    const nextAnimal = animals[nextIndex]
+
+    // même logique que mini game
+    if (nextAnimal === starter) {
+      const phases = [...calcWavePhase.options].map(o => Number(o.value))
+      const phaseIndex = phases.indexOf(selectedPhase)
+
+      if (phaseIndex < phases.length - 1) {
+        calcWavePhase.value = phases[phaseIndex + 1]
+      }
+    }
+
+    calcWaveAnimal.value = nextAnimal
+    renderCalculatorWaves()
+  }
+}
+
+if (prev) {
+  prev.onclick = () => {
+
+    let prevIndex = index - 1
+    if (prevIndex < 0) prevIndex = animals.length - 1
+
+    const prevAnimal = animals[prevIndex]
+
+    if (selectedAnimal === starter) {
+      const phases = [...calcWavePhase.options].map(o => Number(o.value))
+      const phaseIndex = phases.indexOf(selectedPhase)
+
+      if (phaseIndex > 0) {
+        calcWavePhase.value = phases[phaseIndex - 1]
+      }
+    }
+
+    calcWaveAnimal.value = prevAnimal
+    renderCalculatorWaves()
+  }
+}
 }
 
  

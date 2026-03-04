@@ -593,7 +593,7 @@ export const RAW_WAVES = [
     "animal": "Rabbit",
     "level": 47,
     "slot": 1,
-    "defender": "Nidoran♂",
+    "defender": "Nidoran-M",
     "tags": []
   },
   {
@@ -604,7 +604,7 @@ export const RAW_WAVES = [
     "animal": "Rabbit",
     "level": 47,
     "slot": 2,
-    "defender": "Nidoran♀",
+    "defender": "Nidoran-F",
     "tags": []
   },
   {
