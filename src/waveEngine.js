@@ -241,7 +241,7 @@ let bestMin = Infinity
     evEnabled: member.strengthCharm
   })
 
-  const movesFirst = attackerSpe >= defenderSpe   // tie = ok mais warning
+const movesFirst = attackerSpe > defenderSpe
   const speedTie = attackerSpe === defenderSpe
 
   if (min >= 100) {
