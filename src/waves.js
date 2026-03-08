@@ -3413,6 +3413,17 @@ export const RAW_WAVES = [
     "tags": []
   },
   {
+    "rowKey": "P4W10S11",
+    "waveKey": "P4W10",
+    "phase": 4,
+    "wave": 10,
+    "animal": "Dragon",
+    "level": 53,
+    "slot": 11,
+    "defender": "Haxorus",
+    "tags": []
+  },
+  {
     "rowKey": "P4W10S2",
     "waveKey": "P4W10",
     "phase": 4,

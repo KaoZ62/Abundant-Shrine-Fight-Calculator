@@ -155,7 +155,7 @@ function buildAttacker({
   })
 }
 
-function buildDefender({ defenderName, defenderLevel }) {
+function buildDefender({ defenderName, defenderLevel, evEnabled = false }) {
   const name = normKey(defenderName)
 
   const baseStats = abundantStats[name]
@@ -165,7 +165,7 @@ function buildDefender({ defenderName, defenderLevel }) {
 
   return new Pokemon(gen, name, {
     level: defenderLevel,
-    evs: EVS_0,
+    evs: evEnabled ? EVS_85 : EVS_0,
     ivs: IVS_0,
     nature: "Serious",
     overrides: { baseStats }
@@ -214,6 +214,7 @@ export function calculateDamage({
   attackerLevel,
   defenderLevel,
   evEnabled,
+  defenderEvEnabled = false,
   boosts,
   damageMultiplier,
   spreadHitsTwoTargets,
@@ -256,7 +257,8 @@ try {
 
     const defender = buildDefender({
       defenderName: defName,
-      defenderLevel
+      defenderLevel,
+      evEnabled: defenderEvEnabled
     })
 
    const result = calculate(gen, attacker, defender, move)

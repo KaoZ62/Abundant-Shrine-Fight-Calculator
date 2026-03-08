@@ -1,4 +1,4 @@
-import pokemonNames from "./abundant_shrine_pokemon_names.json"
+import pokemonNames from "./abundant_shrine_pokemon_names.json" with { type: "json" }
 
 export const pokemonList = pokemonNames.pokemon
 
@@ -9,6 +9,10 @@ export const pokemonData = {
   ability: "Justified",
   nature: "Adamant",
   moves: ["Sacred Sword", "Iron Head", "Poison Jab"]
+},
+Aerodactyl: {
+  ability: "Rock Head",
+  moves: ["Stone Edge", "Earthquake", "Rock Slide", "Head Smash"]
 },
 
   Growlithe: {
@@ -29,6 +33,8 @@ export const pokemonData = {
       "Helping Hand"
     ]
   },
+
+
   Spinda: {
     ability: "Contrary",
     moves: ["Super Power", "Mega Kick", "Mending Prayer", "Joyous Cheer"]
@@ -477,7 +483,14 @@ Hydreigon: {
     ability: "Shed Skin",
     moves: ["Sludge Bomb", "Flamethrower", "Aqua Tail"]
   },
-
+  Sheldon: {
+    ability: "Sturdy",
+    moves: ["Toxic", "Provoke", "Joyous Cheer", "Mending Prayer"],
+      },
+ Bastiodon: {
+    ability: "Sturdy",
+    moves: ["Toxic", "Provoke", "Joyous Cheer", "Mending Prayer"],
+      },
   Simipour: {
     ability: "Torrent",
     moves: ["Water Pledge", "Acrobatics", "Hidden Power Ground", "Ice Beam"]
